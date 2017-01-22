@@ -15,6 +15,11 @@ Cgi/template routines for the /wifi url.
 #include <esp8266.h>
 #include "cgiwifi.h"
 
+// this allows to publish AP password in the wificonfig template
+#ifndef CGI_PUBLIC_PASSWORD
+#define CGI_PUBLIC_PASSWORD 0
+#endif
+
 //Enable this to disallow any changes in AP settings
 //#define DEMO_MODE
 
@@ -127,14 +132,14 @@ int ICACHE_FLASH_ATTR cgiWiFiScan(HttpdConnData *connData) {
 	if (!cgiWifiAps.scanInProgress && pos!=0) {
 		//Fill in json code for an access point
 		if (pos-1<cgiWifiAps.noAps) {
-			len=sprintf(buff, "{\"essid\": \"%s\", \"bssid\": \"" MACSTR "\", \"rssi\": \"%d\", \"enc\": \"%d\", \"channel\": \"%d\"}%s\n",
+			len=sprintf(buff, "{\"essid\": \"%s\", \"bssid\": \"" MACSTR "\", \"rssi\": \"%d\", \"enc\": \"%d\", \"channel\": \"%d\"}%s",
 					cgiWifiAps.apData[pos-1]->ssid, MAC2STR(cgiWifiAps.apData[pos-1]->bssid), cgiWifiAps.apData[pos-1]->rssi,
 					cgiWifiAps.apData[pos-1]->enc, cgiWifiAps.apData[pos-1]->channel, (pos-1==cgiWifiAps.noAps-1)?"":",");
 			httpdSend(connData, buff, len);
 		}
 		pos++;
 		if ((pos-1)>=cgiWifiAps.noAps) {
-			len=sprintf(buff, "]\n}\n}\n");
+			len=sprintf(buff, "]}}");
 			httpdSend(connData, buff, len);
 			//Also start a new scan.
 			wifiStartScan();
@@ -146,17 +151,17 @@ int ICACHE_FLASH_ATTR cgiWiFiScan(HttpdConnData *connData) {
 	}
 
 	httpdStartResponse(connData, 200);
-	httpdHeader(connData, "Content-Type", "text/json");
+	httpdHeader(connData, "Content-Type", "application/json");
 	httpdEndHeaders(connData);
 
 	if (cgiWifiAps.scanInProgress==1) {
 		//We're still scanning. Tell Javascript code that.
-		len=sprintf(buff, "{\n \"result\": { \n\"inProgress\": \"1\"\n }\n}\n");
+		len=sprintf(buff, "{\"result\": {\"inProgress\": \"1\"}}");
 		httpdSend(connData, buff, len);
 		return HTTPD_CGI_DONE;
 	} else {
 		//We have a scan result. Pass it on.
-		len=sprintf(buff, "{\n \"result\": { \n\"inProgress\": \"0\", \n\"APs\": [\n");
+		len=sprintf(buff, "{\"result\": {\"inProgress\": \"0\", \"APs\": [");
 		httpdSend(connData, buff, len);
 		if (cgiWifiAps.apData==NULL) cgiWifiAps.noAps=0;
 		connData->cgiData=(void *)1;
@@ -174,7 +179,7 @@ static void ICACHE_FLASH_ATTR resetTimerCb(void *arg) {
 	if (x==STATION_GOT_IP) {
 		//Go to STA mode. This needs a reset, so do that.
 		info("Got IP. Going into STA mode..\n");
-		wifi_set_opmode(1);
+		wifi_set_opmode(STATION_MODE);
 		system_restart();
 	} else {
 		connTryStatus=CONNTRY_FAIL;
@@ -196,7 +201,7 @@ static void ICACHE_FLASH_ATTR reassTimerCb(void *arg) {
 	wifi_station_connect();
 	x=wifi_get_opmode();
 	connTryStatus=CONNTRY_WORKING;
-	if (x!=1) {
+	if (x!=STATION_MODE) {
 		//Schedule disconnect/connect
 		os_timer_disarm(&resetTimer);
 		os_timer_setfn(&resetTimer, resetTimerCb, NULL);
@@ -334,8 +339,10 @@ int ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg) 
 		if (x==3) strcpy(buff, "STA+AP");
 	} else if (strcmp(token, "currSsid")==0) {
 		strcpy(buff, (char*)stconf.ssid);
+#if CGI_PUBLIC_PASSWORD
 	} else if (strcmp(token, "WiFiPasswd")==0) {
 		strcpy(buff, (char*)stconf.password);
+#endif
 	} else if (strcmp(token, "WiFiapwarn")==0) {
 		x=wifi_get_opmode();
 		if (x==2) {
