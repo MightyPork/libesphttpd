@@ -29,6 +29,7 @@
 #include <upgrade.h>
 #endif
 
+#include "logging.h"
 #include "platform.h"
 #include "espmissingincludes.h"
 

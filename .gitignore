@@ -8,3 +8,8 @@ espfs/espfstest/espfstest
 *.DS_Store
 html_compressed/
 libwebpages-espfs.a
+
+# Garbage added by CLion
+.idea/
+CMakeLists.txt
+cmake-build-debug/
