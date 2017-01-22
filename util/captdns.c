@@ -322,6 +322,7 @@ void captdnsInit(void) {
 #else
 
 void ICACHE_FLASH_ATTR captdnsInit(void) {
+	info("Starting captive portal...");
 	static struct espconn conn;
 	static esp_udp udpconn;
 	conn.type=ESPCONN_UDP;

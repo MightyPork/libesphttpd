@@ -62,11 +62,13 @@ typedef struct {
 //The mappings from file extensions to mime types. If you need an extra mime type,
 //add it here.
 static const ICACHE_RODATA_ATTR MimeMap mimeTypes[]={
-	{"htm", "text/htm"},
+	{"htm", "text/html"},
 	{"html", "text/html"},
 	{"css", "text/css"},
 	{"js", "text/javascript"},
 	{"txt", "text/plain"},
+	{"csv",  "text/csv"},
+	{"ico",  "image/x-icon"},
 	{"jpg", "image/jpeg"},
 	{"jpeg", "image/jpeg"},
 	{"png", "image/png"},
@@ -85,7 +87,29 @@ const char ICACHE_FLASH_ATTR *httpdGetMimetype(char *url) {
 	if (*ext=='.') ext++;
 
 	while (mimeTypes[i].ext!=NULL && strcasecmp(ext, mimeTypes[i].ext)!=0) i++;
+
+	if (mimeTypes[i].ext==NULL) {
+		// we didn't find any proper match, check for common API paths ("pretty URLs")
+		if (strstarts(url, "/json/")) {
+			return "application/json";
+		}
+	}
+
 	return mimeTypes[i].mimetype;
+}
+
+const char ICACHE_FLASH_ATTR *httpdMethodName(httpd_method m)
+{
+	switch (m) {
+		default:
+		case HTTPD_METHOD_GET: return "GET";
+		case HTTPD_METHOD_POST: return "POST";
+		case HTTPD_METHOD_OPTIONS: return "OPTIONS";
+		case HTTPD_METHOD_PUT: return "PUT";
+		case HTTPD_METHOD_DELETE: return "DELETE";
+		case HTTPD_METHOD_PATCH: return "PATCH";
+		case HTTPD_METHOD_HEAD: return "HEAD";
+	}
 }
 
 //Looks up the connData info for a specific connection
@@ -170,7 +194,7 @@ int ICACHE_FLASH_ATTR httpdFindArg(char *line, char *arg, char *buff, int buffLe
 	p=line;
 	while(p!=NULL && *p!='\n' && *p!='\r' && *p!=0) {
 //		dbg("findArg: %s", p);
-		if (strncmp(p, arg, strlen(arg))==0 && p[strlen(arg)]=='=') {
+		if (strstarts(p, arg) && p[strlen(arg)]=='=') {
 			p+=strlen(arg)+1; //move p to start of value
 			e=(char*)strstr(p, "&");
 			if (e==NULL) e=p+strlen(p);
@@ -193,7 +217,7 @@ int ICACHE_FLASH_ATTR httpdGetHeader(HttpdConnData *conn, char *header, char *re
 	while (p<(conn->priv->head+conn->priv->headPos)) {
 		while(*p<=32 && *p!=0) p++; //skip crap at start
 		//See if this is the header
-		if (strncmp(p, header, strlen(header))==0 && p[strlen(header)]==':') {
+		if (strstarts(p, header) && p[strlen(header)]==':') {
 			//Skip 'key:' bit of header line
 			p=p+strlen(header)+1;
 			//Skip past spaces after the colon
@@ -577,23 +601,26 @@ static void ICACHE_FLASH_ATTR httpdParseHeader(char *h, HttpdConnData *conn) {
 	int i;
 	char firstLine=0;
 	
-	if (strncmp(h, "GET ", 4)==0) {
+	if (strstarts(h, "GET ")==0) {
 		conn->requestType = HTTPD_METHOD_GET;
 		firstLine=1;
-	} else if (strncmp(h, "Host:", 5)==0) {
+	} else if (strstarts(h, "Host:")) {
 		i=5;
 		while (h[i]==' ') i++;
 		conn->hostName=&h[i];
-	} else if (strncmp(h, "POST ", 5)==0) {
+	} else if (strstarts(h, "POST ")) {
 		conn->requestType = HTTPD_METHOD_POST;
 		firstLine=1;
-	} else if (strncmp(h, "PUT ", 4)==0) {
+	} else if (strstarts(h, "PUT ")) {
 		conn->requestType = HTTPD_METHOD_PUT;
 		firstLine=1;
-	} else if (strncmp(h, "PATCH ", 6)==0) {
+	} else if (strstarts(h, "PATCH ")) {
 		conn->requestType = HTTPD_METHOD_PATCH;
 		firstLine=1;
-	} else if (strncmp(h, "DELETE ", 7)==0) {
+	} else if (strstarts(h, "OPTIONS ")) {
+		conn->requestType = HTTPD_METHOD_OPTIONS;
+		firstLine=1;
+	} else if (strstarts(h, "DELETE ")) {
 		conn->requestType = HTTPD_METHOD_DELETE;
 		firstLine=1;
 	}
@@ -625,12 +652,12 @@ static void ICACHE_FLASH_ATTR httpdParseHeader(char *h, HttpdConnData *conn) {
 		} else {
 			conn->getArgs=NULL;
 		}
-	} else if (strncmp(h, "Connection:", 11)==0) {
+	} else if (strstarts(h, "Connection:")) {
 		i=11;
 		//Skip trailing spaces
 		while (h[i]==' ') i++;
-		if (strncmp(&h[i], "close", 5)==0) conn->priv->flags&=~HFL_CHUNKED; //Don't use chunked conn
-	} else if (strncmp(h, "Content-Length:", 15)==0) {
+		if (strstarts(&h[i], "close")) conn->priv->flags&=~HFL_CHUNKED; //Don't use chunked conn
+	} else if (strstarts(h, "Content-Length:")) {
 		i=15;
 		//Skip trailing spaces
 		while (h[i]==' ') i++;
@@ -651,7 +678,7 @@ static void ICACHE_FLASH_ATTR httpdParseHeader(char *h, HttpdConnData *conn) {
 			return;
 		}
 		conn->post->buffLen=0;
-	} else if (strncmp(h, "Content-Type: ", 14)==0) {
+	} else if (strstarts(h, "Content-Type: ")) {
 		if (strstr(h, "multipart/form-data")) {
 			// It's multipart form data so let's pull out the boundary for future use
 			char *b;

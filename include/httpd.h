@@ -14,20 +14,37 @@
 //size of the backlog.
 #define HTTPD_MAX_BACKLOG_SIZE	(4*1024)
 
-#define HTTPD_CGI_MORE 0
-#define HTTPD_CGI_DONE 1
-#define HTTPD_CGI_NOTFOUND 2
-#define HTTPD_CGI_AUTHENTICATED 3
+/**
+ * CGI handler state / return value
+ */
+typedef enum {
+	HTTPD_CGI_MORE = 0,
+	HTTPD_CGI_DONE = 1,
+	HTTPD_CGI_NOTFOUND = 2,
+	HTTPD_CGI_AUTHENTICATED = 3,
+} httpd_cgi_state;
 
-#define HTTPD_METHOD_GET 1
-#define HTTPD_METHOD_POST 2
-#define HTTPD_METHOD_PUT 3
-#define HTTPD_METHOD_PATCH 4
-#define HTTPD_METHOD_DELETE 5
+/**
+ * HTTP method (verb) used for the request
+ */
+typedef enum {
+	HTTPD_METHOD_GET = 1,
+	HTTPD_METHOD_POST = 2,
+	HTTPD_METHOD_OPTIONS = 3,
+	HTTPD_METHOD_PUT = 4,
+	HTTPD_METHOD_DELETE = 5,
+	HTTPD_METHOD_PATCH = 6,
+	HTTPD_METHOD_HEAD = 7,
+} httpd_method;
 
-#define HTTPD_TRANSFER_CLOSE 0
-#define HTTPD_TRANSFER_CHUNKED 1
-#define HTTPD_TRANSFER_NONE 2
+/**
+ * Transfer mode
+ */
+typedef enum {
+	HTTPD_TRANSFER_CLOSE = 0,
+	HTTPD_TRANSFER_CHUNKED = 1,
+	HTTPD_TRANSFER_NONE = 2,
+} httpd_transfer_opt;
 
 typedef struct HttpdPriv HttpdPriv;
 typedef struct HttpdConnData HttpdConnData;
@@ -81,6 +98,7 @@ int httpdUrlDecode(char *val, int valLen, char *ret, int retLen);
 int httpdFindArg(char *line, char *arg, char *buff, int buffLen);
 void httpdInit(HttpdBuiltInUrl *fixedUrls, int port);
 const char *httpdGetMimetype(char *url);
+const char *httpdMethodName(httpd_method m);
 void httdSetTransferMode(HttpdConnData *conn, int mode);
 void httpdStartResponse(HttpdConnData *conn, int code);
 void httpdHeader(HttpdConnData *conn, const char *field, const char *val);

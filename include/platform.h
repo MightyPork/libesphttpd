@@ -31,6 +31,11 @@ typedef RtosConnType* ConnTypePtr;
 #define memcmp(a, b, c) os_memcmp(a, b, c)
 typedef struct espconn* ConnTypePtr;
 #define httpd_printf(format, ...) os_printf(format, ##__VA_ARGS__)
+
+// Custom helpers
+#define streq(a, b) (strcmp(a, b) == 0)
+#define strneq(a, b, n) (strncmp(a, b, n) == 0)
+#define strstarts(a, b) strneq(a, b, (int)strlen(b))
 #endif
 
 
