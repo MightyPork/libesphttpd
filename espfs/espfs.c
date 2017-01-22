@@ -155,8 +155,8 @@ EspFsFile ICACHE_FLASH_ATTR *espFsOpen(const char *fileName) {
 		p+=sizeof(EspFsHeader); 
 		spi_flash_read((uint32)p, (uint32*)&namebuf, sizeof(namebuf));
 
-		info("Found file '%s'. Namelen=%x fileLenComp=%x, compr=%d flags=%d",
-		     namebuf, (unsigned int)h.nameLen, (unsigned int)h.fileLenComp, h.compression, h.flags);
+		//info("Found file '%s'. Namelen=%x fileLenComp=%x, compr=%d flags=%d",
+		//     namebuf, (unsigned int)h.nameLen, (unsigned int)h.fileLenComp, h.compression, h.flags);
 
 		if (strcmp(namebuf, fileName)==0) {
 			//Yay, this is the file we need!

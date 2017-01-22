@@ -13,6 +13,8 @@
 //layer is prone to do), we put it in a backlog that is dynamically malloc'ed. This defines the max
 //size of the backlog.
 #define HTTPD_MAX_BACKLOG_SIZE	(4*1024)
+//Max len of CORS token. This is allocated in each connection
+#define MAX_CORS_TOKEN_LEN 256
 
 /**
  * CGI handler state / return value

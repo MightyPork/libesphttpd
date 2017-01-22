@@ -37,6 +37,7 @@ struct HttpSendBacklogItem {
 //Private data for http connection
 struct HttpdPriv {
 	char head[HTTPD_MAX_HEAD_LEN];
+	char corsToken[MAX_CORS_TOKEN_LEN];
 	int headPos;
 	char *sendBuff;
 	int sendBuffLen;
@@ -262,6 +263,10 @@ void ICACHE_FLASH_ATTR httpdStartResponse(HttpdConnData *conn, int code) {
 			code, 
 			connStr);
 	httpdSend(conn, buff, l);
+
+	// CORS headers
+	httpdSend(conn, "Access-Control-Allow-Origin: *\r\n", -1);
+	httpdSend(conn, "Access-Control-Allow-Methods: GET,POST,OPTIONS\r\n", -1);
 }
 
 //Send a http header.
@@ -546,6 +551,19 @@ static void ICACHE_FLASH_ATTR httpdProcessRequest(HttpdConnData *conn) {
 		warn("WtF? url = NULL");
 		return; //Shouldn't happen
 	}
+
+	// CORS preflight, allow the token we received before
+	if (conn->requestType == HTTPD_METHOD_OPTIONS) {
+		httpdStartResponse(conn, 200);
+		httpdHeader(conn, "Access-Control-Allow-Headers", conn->priv->corsToken);
+		httpdEndHeaders(conn);
+		httpdCgiIsDone(conn);
+
+		dbg("CORS preflight resp sent.");
+		return;
+	}
+
+
 	//See if we can find a CGI that's happy to handle the request.
 	while (1) {
 		//Look up URL in the built-in URL table.
@@ -689,6 +707,12 @@ static void ICACHE_FLASH_ATTR httpdParseHeader(char *h, HttpdConnData *conn) {
 				dbg("boundary = %s", conn->post->multipartBoundary);
 			}
 		}
+	} else if (strstarts(h, "Access-Control-Request-Headers: ")) {
+		// CORS crap that needs to be repeated in the response
+
+		info("CORS preflight request.");
+
+		strncpy(conn->priv->corsToken, h+strlen("Access-Control-Request-Headers: "), MAX_CORS_TOKEN_LEN);
 	}
 }
 
@@ -732,6 +756,7 @@ void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, char *remIp, int remPort, 
 	}
 	conn->priv->sendBuff=sendBuff;
 	conn->priv->sendBuffLen=0;
+	conn->priv->corsToken[0] = 0;
 
 	//This is slightly evil/dirty: we abuse conn->post->len as a state variable for where in the http communications we are:
 	//<0 (-1): Post len unknown because we're still receiving headers
