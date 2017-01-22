@@ -14,6 +14,7 @@ Header, filename and file data is 32-bit aligned. The last file is indicated by 
 with the FLAG_LASTFILE flag set.
 */
 
+#include <stdint.h>
 
 #define FLAG_LASTFILE (1<<0)
 #define FLAG_GZIP (1<<1)
