@@ -95,7 +95,7 @@ void ICACHE_FLASH_ATTR wifiScanDoneCb(void *arg, STATUS status) {
 		//Save the ap data.
 		cgiWifiAps.apData[n]=(ApData *)malloc(sizeof(ApData));
 		if (cgiWifiAps.apData[n]==NULL) {
-			error("Can't allocate mem for ap buff.\n");
+			error("Can't allocate mem for ap buff.");
 			cgiWifiAps.scanInProgress=0;
 			return;
 		}
@@ -178,12 +178,12 @@ static void ICACHE_FLASH_ATTR resetTimerCb(void *arg) {
 	int x=wifi_station_get_connect_status();
 	if (x==STATION_GOT_IP) {
 		//Go to STA mode. This needs a reset, so do that.
-		info("Got IP. Going into STA mode..\n");
+		info("Got IP. Going into STA mode..");
 		wifi_set_opmode(STATION_MODE);
 		system_restart();
 	} else {
 		connTryStatus=CONNTRY_FAIL;
-		error("Connect fail. Not going into STA-only mode.\n");
+		error("Connect fail. Not going into STA-only mode.");
 		//Maybe also pass this through on the webpage?
 	}
 }
@@ -195,7 +195,7 @@ static void ICACHE_FLASH_ATTR resetTimerCb(void *arg) {
 //but I can't be arsed to put the code back :P
 static void ICACHE_FLASH_ATTR reassTimerCb(void *arg) {
 	int x;
-	dbg("Try to connect to AP....\n");
+	dbg("Try to connect to AP....");
 	wifi_station_disconnect();
 	wifi_station_set_config(&stconf);
 	wifi_station_connect();
@@ -227,7 +227,7 @@ int ICACHE_FLASH_ATTR cgiWiFiConnect(HttpdConnData *connData) {
 
 	strncpy((char*)stconf.ssid, essid, 32);
 	strncpy((char*)stconf.password, passwd, 64);
-	info("Try to connect to AP %s pw %s\n", essid, passwd);
+	info("Try to connect to AP %s pw %s", essid, passwd);
 
 	//Schedule disconnect/connect
 	os_timer_disarm(&reassTimer);
@@ -255,7 +255,7 @@ int ICACHE_FLASH_ATTR cgiWiFiSetMode(HttpdConnData *connData) {
 
 	len=httpdFindArg(connData->getArgs, "mode", buff, sizeof(buff));
 	if (len!=0) {
-		dbg("cgiWifiSetMode: %s\n", buff);
+		dbg("cgiWifiSetMode: %s", buff);
 #ifndef DEMO_MODE
 		wifi_set_opmode(atoi(buff));
 		system_restart();

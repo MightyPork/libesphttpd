@@ -198,7 +198,7 @@ static void ICACHE_FLASH_ATTR captdnsRecv(struct sockaddr_in *premote_addr, char
 		if (p==NULL) return;
 		DnsQuestionFooter *qf=(DnsQuestionFooter*)p;
 		p+=sizeof(DnsQuestionFooter);
-		dbg("DNS: Q (type 0x%X class 0x%X) for %s\n", my_ntohs(&qf->type), my_ntohs(&qf->class), buff);
+		info("DNS: Q (type 0x%X class 0x%X) for %s", my_ntohs(&qf->type), my_ntohs(&qf->class), buff);
 		if (my_ntohs(&qf->type)==QTYPE_A) {
 			//They want to know the IPv4 address of something.
 			//Build the response.
@@ -286,7 +286,7 @@ static void captdnsTask(void *pvParameters) {
 	do {
 		sockFd=socket(AF_INET, SOCK_DGRAM, 0);
 		if (sockFd==-1) {
-			error("captdns_task failed to create sock!\n");
+			error("captdns_task failed to create sock!");
 			vTaskDelay(1000/portTICK_RATE_MS);
 		}
 	} while (sockFd==-1);
@@ -294,12 +294,12 @@ static void captdnsTask(void *pvParameters) {
 	do {
 		ret=bind(sockFd, (struct sockaddr *)&server_addr, sizeof(server_addr));
 		if (ret!=0) {
-			error("captdns_task failed to bind sock!\n");
+			error("captdns_task failed to bind sock!");
 			vTaskDelay(1000/portTICK_RATE_MS);
 		}
 	} while (ret!=0);
 
-	info("CaptDNS inited.\n");
+	info("CaptDNS inited.");
 	while(1) {
 		memset(&from, 0, sizeof(from));
 		fromlen=sizeof(struct sockaddr_in);

@@ -127,7 +127,7 @@ int ICACHE_FLASH_ATTR espFsFlags(EspFsFile *fh) {
 //Open a file and return a pointer to the file desc struct.
 EspFsFile ICACHE_FLASH_ATTR *espFsOpen(const char *fileName) {
 	if (espFsData == NULL) {
-		error("[EspFS] Call espFsInit first!\n");
+		error("[EspFS] Call espFsInit first!");
 		return NULL;
 	}
 	const char *p=espFsData;
@@ -144,18 +144,18 @@ EspFsFile ICACHE_FLASH_ATTR *espFsOpen(const char *fileName) {
 		spi_flash_read((uint32)p, (uint32*)&h, sizeof(EspFsHeader));
 
 		if (h.magic!=ESPFS_MAGIC) {
-			error("[EspFS] Magic mismatch. EspFS image broken.\n");
+			error("[EspFS] Magic mismatch. EspFS image broken.");
 			return NULL;
 		}
 		if (h.flags&FLAG_LASTFILE) {
-			dbg("[EspFS] End of image.\n");
+			dbg("[EspFS] End of image.");
 			return NULL;
 		}
 		//Grab the name of the file.
 		p+=sizeof(EspFsHeader); 
 		spi_flash_read((uint32)p, (uint32*)&namebuf, sizeof(namebuf));
 
-		info("Found file '%s'. Namelen=%x fileLenComp=%x, compr=%d flags=%d\n",
+		info("Found file '%s'. Namelen=%x fileLenComp=%x, compr=%d flags=%d",
 		     namebuf, (unsigned int)h.nameLen, (unsigned int)h.fileLenComp, h.compression, h.flags);
 
 		if (strcmp(namebuf, fileName)==0) {
@@ -179,12 +179,12 @@ EspFsFile ICACHE_FLASH_ATTR *espFsOpen(const char *fileName) {
 				//Decoder params are stored in 1st byte.
 				readFlashUnaligned(&parm, r->posComp, 1);
 				r->posComp++;
-				dbg("[EspFS] Heatshrink compressed file; decode parms = %x\n", parm);
+				dbg("[EspFS] Heatshrink compressed file; decode parms = %x", parm);
 				dec=heatshrink_decoder_alloc(16, (parm>>4)&0xf, parm&0xf);
 				r->decompData=dec;
 #endif
 			} else {
-				error("[EspFS] Invalid compression: %d\n", h.compression);
+				error("[EspFS] Invalid compression: %d", h.compression);
 				return NULL;
 			}
 			return r;
