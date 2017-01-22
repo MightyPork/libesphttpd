@@ -57,7 +57,7 @@ int ICACHE_FLASH_ATTR cgiGetFirmwareNext(HttpdConnData *connData) {
 	httpdEndHeaders(connData);
 	char *next = id == 1 ? "user1.bin" : "user2.bin";
 	httpdSend(connData, next, -1);
-	httpd_printf("Next firmware: %s (got %d)\n", next, id);
+	dbg("Next firmware: %s (got %d)", next, id);
 	return HTTPD_CGI_DONE;
 }
 
@@ -115,10 +115,10 @@ int ICACHE_FLASH_ATTR cgiUploadFirmware(HttpdConnData *connData) {
 
 	if (state==NULL) {
 		//First call. Allocate and initialize state variable.
-		httpd_printf("Firmware upload cgi start.\n");
+		dbg("Firmware upload cgi start.");
 		state=malloc(sizeof(UploadState));
 		if (state==NULL) {
-			httpd_printf("Can't allocate firmware upload struct!\n");
+			error("Can't allocate firmware upload struct!");
 			return HTTPD_CGI_DONE;
 		}
 		memset(state, 0, sizeof(UploadState));
@@ -139,11 +139,11 @@ int ICACHE_FLASH_ATTR cgiUploadFirmware(HttpdConnData *connData) {
 				strncpy(buff, h->tag, 27);
 				buff[27]=0;
 				if (strcmp(buff, def->tagName)!=0) {
-					httpd_printf("OTA tag mismatch! Current=`%s` uploaded=`%s`.\n",
+					error("OTA tag mismatch! Current=`%s` uploaded=`%s`.",
 										def->tagName, buff);
 					len=httpdFindArg(connData->getArgs, "force", buff, sizeof(buff));
 					if (len!=-1 && atoi(buff)) {
-						httpd_printf("Forcing firmware flash.\n");
+						warn("Forcing firmware flash.");
 					} else {
 						state->err="Firmware not intended for this device!\n";
 						state->state=FLST_ERROR;
@@ -158,13 +158,13 @@ int ICACHE_FLASH_ATTR cgiUploadFirmware(HttpdConnData *connData) {
 					dataLen-=sizeof(OtaHeader); //skip header when parsing data
 					data+=sizeof(OtaHeader);
 					if (system_upgrade_userbin_check()==1) {
-						httpd_printf("Flashing user1.bin from ota image\n");
+						dbg("Flashing user1.bin from ota image");
 						state->len=h->len1;
 						state->skip=h->len2;
 						state->state=FLST_WRITE;
 						state->address=def->fw1Pos;
 					} else {
-						httpd_printf("Flashing user2.bin from ota image\n");
+						dbg("Flashing user2.bin from ota image");
 						state->len=h->len2;
 						state->skip=h->len1;
 						state->state=FLST_SKIP;
@@ -192,7 +192,7 @@ int ICACHE_FLASH_ATTR cgiUploadFirmware(HttpdConnData *connData) {
 			} else {
 				state->err="Invalid flash image type!";
 				state->state=FLST_ERROR;
-				httpd_printf("Did not recognize flash image type!\n");
+				error("Did not recognize flash image type!");
 			}
 		} else if (state->state==FLST_SKIP) {
 			//Skip bytes without doing anything with them
@@ -231,7 +231,7 @@ int ICACHE_FLASH_ATTR cgiUploadFirmware(HttpdConnData *connData) {
 					spi_flash_erase_sector(state->address/SPI_FLASH_SEC_SIZE);
 				}
 				//Write page
-				//httpd_printf("Writing %d bytes of data to SPI pos 0x%x...\n", state->pagePos, state->address);
+				//dbg("Writing %d bytes of data to SPI pos 0x%x...", state->pagePos, state->address);
 				spi_flash_write(state->address, (uint32 *)state->pageData, state->pagePos);
 				state->address+=PAGELEN;
 				state->pagePos=0;
@@ -241,7 +241,7 @@ int ICACHE_FLASH_ATTR cgiUploadFirmware(HttpdConnData *connData) {
 				}
 			}
 		} else if (state->state==FLST_DONE) {
-			httpd_printf("Huh? %d bogus bytes received after data received.\n", dataLen);
+			warn("Huh? %d bogus bytes received after data received.", dataLen);
 			//Ignore those bytes.
 			dataLen=0;
 		} else if (state->state==FLST_ERROR) {
@@ -252,7 +252,7 @@ int ICACHE_FLASH_ATTR cgiUploadFirmware(HttpdConnData *connData) {
 	
 	if (connData->post->len==connData->post->received) {
 		//We're done! Format a response.
-		httpd_printf("Upload done. Sending response.\n");
+		info("Upload done. Sending response.");
 		httpdStartResponse(connData, state->state==FLST_ERROR?400:200);
 		httpdHeader(connData, "Content-Type", "text/plain");
 		httpdEndHeaders(connData);
