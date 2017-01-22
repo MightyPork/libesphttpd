@@ -17,6 +17,6 @@
 //has.
 typedef int (* AuthGetUserPw)(HttpdConnData *connData, int no, char *user, int userLen, char *pass, int passLen);
 
-int ICACHE_FLASH_ATTR authBasic(HttpdConnData *connData);
+httpd_cgi_state ICACHE_FLASH_ATTR authBasic(HttpdConnData *connData);
 
 #endif

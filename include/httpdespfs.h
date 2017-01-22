@@ -3,7 +3,7 @@
 
 #include "httpd.h"
 
-int cgiEspFsHook(HttpdConnData *connData);
-int ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData);
+httpd_cgi_state cgiEspFsHook(HttpdConnData *connData);
+httpd_cgi_state cgiEspFsTemplate(HttpdConnData *connData);
 
 #endif

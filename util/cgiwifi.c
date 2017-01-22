@@ -124,7 +124,7 @@ static void ICACHE_FLASH_ATTR wifiStartScan() {
 //This CGI is called from the bit of AJAX-code in wifi.tpl. It will initiate a
 //scan for access points and if available will return the result of an earlier scan.
 //The result is embedded in a bit of JSON parsed by the javascript in wifi.tpl.
-int ICACHE_FLASH_ATTR cgiWiFiScan(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiWiFiScan(HttpdConnData *connData) {
 	int pos=(int)connData->cgiData;
 	int len;
 	char buff[1024];
@@ -212,7 +212,7 @@ static void ICACHE_FLASH_ATTR reassTimerCb(void *arg) {
 
 //This cgi uses the routines above to connect to a specific access point with the
 //given ESSID using the given password.
-int ICACHE_FLASH_ATTR cgiWiFiConnect(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiWiFiConnect(HttpdConnData *connData) {
 	char essid[128];
 	char passwd[128];
 	static os_timer_t reassTimer;
@@ -244,7 +244,7 @@ int ICACHE_FLASH_ATTR cgiWiFiConnect(HttpdConnData *connData) {
 
 //This cgi uses the routines above to connect to a specific access point with the
 //given ESSID using the given password.
-int ICACHE_FLASH_ATTR cgiWiFiSetMode(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiWiFiSetMode(HttpdConnData *connData) {
 	int len;
 	char buff[1024];
 	
@@ -266,7 +266,7 @@ int ICACHE_FLASH_ATTR cgiWiFiSetMode(HttpdConnData *connData) {
 }
 
 //Set wifi channel for AP mode
-int ICACHE_FLASH_ATTR cgiWiFiSetChannel(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiWiFiSetChannel(HttpdConnData *connData) {
 	int len;
 	char buff[64];
 
@@ -292,7 +292,7 @@ int ICACHE_FLASH_ATTR cgiWiFiSetChannel(HttpdConnData *connData) {
 	return HTTPD_CGI_DONE;
 }
 
-int ICACHE_FLASH_ATTR cgiWiFiConnStatus(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiWiFiConnStatus(HttpdConnData *connData) {
 	char buff[1024];
 	int len;
 	struct ip_info info;
@@ -324,7 +324,7 @@ int ICACHE_FLASH_ATTR cgiWiFiConnStatus(HttpdConnData *connData) {
 }
 
 //Template code for the WLAN page.
-int ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg) {
+httpd_cgi_state ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg) {
 	char buff[1024];
 	int x;
 	static struct station_config stconf;
@@ -335,8 +335,8 @@ int ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg) 
 	if (strcmp(token, "WiFiMode")==0) {
 		x=wifi_get_opmode();
 		if (x==1) strcpy(buff, "Client");
-		if (x==2) strcpy(buff, "SoftAP");
-		if (x==3) strcpy(buff, "STA+AP");
+		else if (x==2) strcpy(buff, "SoftAP");
+		else if (x==3) strcpy(buff, "STA+AP");
 	} else if (strcmp(token, "currSsid")==0) {
 		strcpy(buff, (char*)stconf.ssid);
 #if CGI_PUBLIC_PASSWORD

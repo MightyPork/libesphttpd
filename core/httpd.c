@@ -288,7 +288,7 @@ void ICACHE_FLASH_ATTR httpdRedirect(HttpdConnData *conn, char *newUrl) {
 }
 
 //Use this as a cgi function to redirect one url to another.
-int ICACHE_FLASH_ATTR cgiRedirect(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiRedirect(HttpdConnData *connData) {
 	if (connData->conn==NULL) {
 		//Connection aborted. Clean up.
 		return HTTPD_CGI_DONE;
@@ -298,7 +298,7 @@ int ICACHE_FLASH_ATTR cgiRedirect(HttpdConnData *connData) {
 }
 
 //Used to spit out a 404 error
-static int ICACHE_FLASH_ATTR cgiNotFound(HttpdConnData *connData) {
+static httpd_cgi_state ICACHE_FLASH_ATTR cgiNotFound(HttpdConnData *connData) {
 	if (connData->conn==NULL) return HTTPD_CGI_DONE;
 	httpdStartResponse(connData, 404);
 	httpdEndHeaders(connData);
@@ -311,7 +311,7 @@ static int ICACHE_FLASH_ATTR cgiNotFound(HttpdConnData *connData) {
 //ESP in order to load a HTML page as soon as a phone, tablet etc connects to the ESP. Watch out:
 //this will also redirect connections when the ESP is in STA mode, potentially to a hostname that is not
 //in the 'official' DNS and so will fail.
-int ICACHE_FLASH_ATTR cgiRedirectToHostname(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiRedirectToHostname(HttpdConnData *connData) {
 	static const char hostFmt[]="http://%s/";
 	char *buff;
 	int isIP=0;
@@ -352,7 +352,7 @@ int ICACHE_FLASH_ATTR cgiRedirectToHostname(HttpdConnData *connData) {
 //Same as above, but will only redirect clients with an IP that is in the range of
 //the SoftAP interface. This should preclude clients connected to the STA interface
 //to be redirected to nowhere.
-int ICACHE_FLASH_ATTR cgiRedirectApClientToHostname(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiRedirectApClientToHostname(HttpdConnData *connData) {
 #ifndef FREERTOS
 	uint32 *remadr;
 	struct ip_info apip;
@@ -601,7 +601,7 @@ static void ICACHE_FLASH_ATTR httpdParseHeader(char *h, HttpdConnData *conn) {
 	int i;
 	char firstLine=0;
 	
-	if (strstarts(h, "GET ")==0) {
+	if (strstarts(h, "GET ")) {
 		conn->requestType = HTTPD_METHOD_GET;
 		firstLine=1;
 	} else if (strstarts(h, "Host:")) {
@@ -634,7 +634,7 @@ static void ICACHE_FLASH_ATTR httpdParseHeader(char *h, HttpdConnData *conn) {
 		conn->url=h+i+1;
 
 		//Figure out end of url.
-		e=(char*)strstr(conn->url, " ");
+		e=strstr(conn->url, " ");
 		if (e==NULL) return; //wtf?
 		*e=0; //terminate url part
 		e++; //Skip to protocol indicator
@@ -644,7 +644,7 @@ static void ICACHE_FLASH_ATTR httpdParseHeader(char *h, HttpdConnData *conn) {
 
 		info("URL = %s", conn->url);
 		//Parse out the URL part before the GET parameters.
-		conn->getArgs=(char*)strstr(conn->url, "?");
+		conn->getArgs=strstr(conn->url, "?");
 		if (conn->getArgs!=0) {
 			*conn->getArgs=0;
 			conn->getArgs++;

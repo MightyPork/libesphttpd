@@ -24,7 +24,7 @@ static const char *gzipNonSupportedMessage = "HTTP/1.0 501 Not implemented\r\nSe
 //This is a catch-all cgi function. It takes the url passed to it, looks up the corresponding
 //path in the filesystem and if it exists, passes the file through. This simulates what a normal
 //webserver would do with static files.
-int ICACHE_FLASH_ATTR cgiEspFsHook(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsHook(HttpdConnData *connData) {
 	EspFsFile *file=connData->cgiData;
 	int len;
 	char buff[1024];
@@ -106,7 +106,7 @@ typedef struct {
 
 typedef void (* TplCallback)(HttpdConnData *connData, char *token, void **arg);
 
-int ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
+httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 	TplData *tpd=connData->cgiData;
 	int len;
 	int x, sp=0;
