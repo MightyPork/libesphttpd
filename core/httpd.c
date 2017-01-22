@@ -80,10 +80,10 @@ static const ICACHE_RODATA_ATTR MimeMap mimeTypes[]={
 };
 
 //Returns a static char* to a mime type for a given url to a file.
-const char ICACHE_FLASH_ATTR *httpdGetMimetype(char *url) {
+const char ICACHE_FLASH_ATTR *httpdGetMimetype(const char *url) {
 	int i=0;
 	//Go find the extension
-	char *ext=url+(strlen(url)-1);
+	const char *ext=url+(strlen(url)-1);
 	while (ext!=url && *ext!='.') ext--;
 	if (*ext=='.') ext++;
 
@@ -579,6 +579,7 @@ static void ICACHE_FLASH_ATTR httpdProcessRequest(HttpdConnData *conn) {
 				conn->cgiData=NULL;
 				conn->cgi=builtInUrls[i].cgiCb;
 				conn->cgiArg=builtInUrls[i].cgiArg;
+				conn->cgiArg2=builtInUrls[i].cgiArg2;
 				break;
 			}
 			i++;

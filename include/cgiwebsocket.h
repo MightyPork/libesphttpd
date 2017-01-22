@@ -1,6 +1,7 @@
 #ifndef CGIWEBSOCKET_H
 #define CGIWEBSOCKET_H
 
+#include <esp8266.h>
 #include "httpd.h"
 
 #define WEBSOCK_FLAG_NONE 0
@@ -28,10 +29,10 @@ struct Websock {
 };
 
 httpd_cgi_state ICACHE_FLASH_ATTR cgiWebsocket(HttpdConnData *connData);
-httpd_cgi_state ICACHE_FLASH_ATTR cgiWebsocketSend(Websock *ws, char *data, int len, int flags);
+int ICACHE_FLASH_ATTR cgiWebsocketSend(Websock *ws, char *data, int len, int flags);
 void ICACHE_FLASH_ATTR cgiWebsocketClose(Websock *ws, int reason);
 httpd_cgi_state ICACHE_FLASH_ATTR cgiWebSocketRecv(HttpdConnData *connData, char *data, int len);
-httpd_cgi_state ICACHE_FLASH_ATTR cgiWebsockBroadcast(char *resource, char *data, int len, int flags);
+int ICACHE_FLASH_ATTR cgiWebsockBroadcast(char *resource, char *data, int len, int flags);
 
 
 #endif
