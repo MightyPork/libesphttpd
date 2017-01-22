@@ -260,6 +260,33 @@ int ICACHE_FLASH_ATTR cgiWiFiSetMode(HttpdConnData *connData) {
 	return HTTPD_CGI_DONE;
 }
 
+//Set wifi channel for AP mode
+int ICACHE_FLASH_ATTR cgiWiFiSetChannel(HttpdConnData *connData) {
+	int len;
+	char buff[64];
+
+	if (connData->conn==NULL) {
+		//Connection aborted. Clean up.
+		return HTTPD_CGI_DONE;
+	}
+
+	len=httpdFindArg(connData->getArgs, "ch", buff, sizeof(buff));
+	if (len!=0) {
+		info("cgiWifiSetChannel: %s", buff);
+		int channel = atoi(buff);
+		if (channel > 0 && channel < 15) {
+			dbg("Setting ch=%d", channel);
+
+			struct softap_config wificfg;
+			wifi_softap_get_config(&wificfg);
+			wificfg.channel = (uint8)channel;
+			wifi_softap_set_config(&wificfg);
+		}
+	}
+	httpdRedirect(connData, "/wifi");
+	return HTTPD_CGI_DONE;
+}
+
 int ICACHE_FLASH_ATTR cgiWiFiConnStatus(HttpdConnData *connData) {
 	char buff[1024];
 	int len;
@@ -320,4 +347,3 @@ int ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg) 
 	httpdSend(connData, buff, -1);
 	return HTTPD_CGI_DONE;
 }
-

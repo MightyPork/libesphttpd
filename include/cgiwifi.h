@@ -8,6 +8,7 @@ int tplWlan(HttpdConnData *connData, char *token, void **arg);
 int cgiWiFi(HttpdConnData *connData);
 int cgiWiFiConnect(HttpdConnData *connData);
 int cgiWiFiSetMode(HttpdConnData *connData);
+int cgiWiFiSetChannel(HttpdConnData *connData);
 int cgiWiFiConnStatus(HttpdConnData *connData);
 
 #endif
