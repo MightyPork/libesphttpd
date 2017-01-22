@@ -170,12 +170,12 @@ int ICACHE_FLASH_ATTR httpdFindArg(char *line, char *arg, char *buff, int buffLe
 	if (line==NULL) return -1;
 	p=line;
 	while(p!=NULL && *p!='\n' && *p!='\r' && *p!=0) {
-//		dbg("findArg: %s\n", p);
+//		dbg("findArg: %s", p);
 		if (strncmp(p, arg, strlen(arg))==0 && p[strlen(arg)]=='=') {
 			p+=strlen(arg)+1; //move p to start of value
 			e=(char*)strstr(p, "&");
 			if (e==NULL) e=p+strlen(p);
-//			dbg("findArg: val %s len %d\n", p, (e-p));
+//			dbg("findArg: val %s len %d", p, (e-p));
 			return httpdUrlDecode(p, (e-p), buff, buffLen);
 		}
 		p=(char*)strstr(p, "&");
@@ -405,7 +405,7 @@ void ICACHE_FLASH_ATTR httpdFlushSendBuffer(HttpdConnData *conn) {
 		if (!r) {
 			//Can't send this for some reason. Dump packet in backlog, we can send it later.
 			if (conn->priv->sendBacklogSize+conn->priv->sendBuffLen>HTTPD_MAX_BACKLOG_SIZE) {
-				error("Httpd: Backlog: Exceeded max backlog size, dropped %d bytes instead of sending them.\n", conn->priv->sendBuffLen);
+				error("Httpd: Backlog: Exceeded max backlog size, dropped %d bytes instead of sending them.", conn->priv->sendBuffLen);
 				conn->priv->sendBuffLen=0;
 				return;
 			}
@@ -848,5 +848,9 @@ void ICACHE_FLASH_ATTR httpdInit(HttpdBuiltInUrl *fixedUrls, int port) {
 	builtInUrls=fixedUrls;
 
 	httpdPlatInit(port, HTTPD_MAX_CONNECTIONS);
+
+	// Start the uptime counter
+	uptime_timer_init();
+
 	info("Httpd init");
 }
