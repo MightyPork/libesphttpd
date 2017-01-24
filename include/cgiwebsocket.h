@@ -5,8 +5,9 @@
 #include "httpd.h"
 
 #define WEBSOCK_FLAG_NONE 0
-#define WEBSOCK_FLAG_CONT (1<<0) //Set if the data is not the final data in the message; more follows
+#define WEBSOCK_FLAG_MORE (1<<0) //Set if the data is not the final data in the message; more follows
 #define WEBSOCK_FLAG_BIN (1<<1) //Set if the data is binary instead of text
+#define WEBSOCK_FLAG_CONT (1<<2) // set if this is a continuation frame (after WEBSOCK_FLAG_CONT)
 
 
 

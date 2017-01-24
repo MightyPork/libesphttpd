@@ -111,8 +111,15 @@ static int ICACHE_FLASH_ATTR sendFrameHead(Websock *ws, int opcode, int len) {
 int ICACHE_FLASH_ATTR cgiWebsocketSend(Websock *ws, char *data, int len, int flags) {
 	int r=0;
 	int fl=0;
-	if (flags&WEBSOCK_FLAG_BIN) fl=OPCODE_BINARY; else fl=OPCODE_TEXT;
-	if (!(flags&WEBSOCK_FLAG_CONT)) fl|=FLAG_FIN;
+	// Continuation frame has opcode 0
+	if (!(flags&WEBSOCK_FLAG_CONT)) {
+		if (flags & WEBSOCK_FLAG_BIN)
+			fl = OPCODE_BINARY;
+		else
+			fl = OPCODE_TEXT;
+	}
+	// add FIN to last frame
+	if (!(flags&WEBSOCK_FLAG_MORE)) fl|=FLAG_FIN;
 	sendFrameHead(ws, fl, len);
 	if (len!=0) r=httpdSend(ws->conn, data, len);
 	httpdFlushSendBuffer(ws->conn);
@@ -239,7 +246,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebSocketRecv(HttpdConnData *connData, char
 				} else {
 					int flags=0;
 					if ((ws->priv->fr.flags&OPCODE_MASK)==OPCODE_BINARY) flags|=WEBSOCK_FLAG_BIN;
-					if ((ws->priv->fr.flags&FLAG_FIN)==0) flags|=WEBSOCK_FLAG_CONT;
+					if ((ws->priv->fr.flags&FLAG_FIN)==0) flags|=WEBSOCK_FLAG_MORE;
 					if (ws->recvCb) ws->recvCb(ws, data+i, sl, flags);
 				}
 			} else if ((ws->priv->fr.flags&OPCODE_MASK)==OPCODE_CLOSE) {
