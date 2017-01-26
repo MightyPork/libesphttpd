@@ -37,7 +37,7 @@ struct HttpSendBacklogItem {
 //Private data for http connection
 struct HttpdPriv {
 	char head[HTTPD_MAX_HEAD_LEN];
-	char corsToken[MAX_CORS_TOKEN_LEN];
+	char corsToken[HTTPD_MAX_CORS_TOKEN_LEN];
 	int headPos;
 	char *sendBuff;
 	int sendBuffLen;
@@ -110,6 +110,22 @@ const char ICACHE_FLASH_ATTR *httpdMethodName(httpd_method m)
 		case HTTPD_METHOD_DELETE: return "DELETE";
 		case HTTPD_METHOD_PATCH: return "PATCH";
 		case HTTPD_METHOD_HEAD: return "HEAD";
+	}
+}
+
+const char ICACHE_FLASH_ATTR *code2str(int code)
+{
+	switch (code) {
+		case 200: return "OK";
+		case 301: return "Moved Permanently";
+		case 302: return "Found";
+		case 403: return "Forbidden";
+		case 400: return "Bad Request";
+		case 404: return "Not Found";
+		default:
+			if (code >= 500) return "Server Error";
+			if (code >= 400) return "Client Error";
+			return "OK";
 	}
 }
 
@@ -258,9 +274,10 @@ void ICACHE_FLASH_ATTR httpdStartResponse(HttpdConnData *conn, int code) {
 	const char *connStr="Connection: close\r\n";
 	if (conn->priv->flags&HFL_CHUNKED) connStr="Transfer-Encoding: chunked\r\n";
 	if (conn->priv->flags&HFL_NOCONNECTIONSTR) connStr="";
-	l=sprintf(buff, "HTTP/1.%d %d OK\r\nServer: esp8266-httpd/"HTTPDVER"\r\n%s", 
+	l=sprintf(buff, "HTTP/1.%d %d %s\r\nServer: esp8266-httpd/"HTTPDVER"\r\n%s",
 			(conn->priv->flags&HFL_HTTP11)?1:0, 
-			code, 
+			code,
+			code2str(code),
 			connStr);
 	httpdSend(conn, buff, l);
 
@@ -575,7 +592,7 @@ static void ICACHE_FLASH_ATTR httpdProcessRequest(HttpdConnData *conn) {
 			if (builtInUrls[i].url[strlen(builtInUrls[i].url)-1]=='*' &&
 					strncmp(builtInUrls[i].url, conn->url, strlen(builtInUrls[i].url)-1)==0) match=1;
 			if (match) {
-				dbg("Is url index %d", i);
+				dbg("Matched route #%d, url=%s", i, builtInUrls[i].url);
 				conn->cgiData=NULL;
 				conn->cgi=builtInUrls[i].cgiCb;
 				conn->cgiArg=builtInUrls[i].cgiArg;
@@ -713,7 +730,7 @@ static void ICACHE_FLASH_ATTR httpdParseHeader(char *h, HttpdConnData *conn) {
 
 		info("CORS preflight request.");
 
-		strncpy(conn->priv->corsToken, h+strlen("Access-Control-Request-Headers: "), MAX_CORS_TOKEN_LEN);
+		strncpy(conn->priv->corsToken, h+strlen("Access-Control-Request-Headers: "), HTTPD_MAX_CORS_TOKEN_LEN);
 	}
 }
 

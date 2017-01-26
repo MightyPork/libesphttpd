@@ -10,5 +10,6 @@ httpd_cgi_state cgiWiFiConnect(HttpdConnData *connData);
 httpd_cgi_state cgiWiFiSetMode(HttpdConnData *connData);
 httpd_cgi_state cgiWiFiSetChannel(HttpdConnData *connData);
 httpd_cgi_state cgiWiFiConnStatus(HttpdConnData *connData);
+httpd_cgi_state cgiWiFiSetSSID(HttpdConnData *connData);
 
 #endif

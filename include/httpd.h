@@ -14,7 +14,7 @@
 //size of the backlog.
 #define HTTPD_MAX_BACKLOG_SIZE	(4*1024)
 //Max len of CORS token. This is allocated in each connection
-#define MAX_CORS_TOKEN_LEN 256
+#define HTTPD_MAX_CORS_TOKEN_LEN      256
 
 /**
  * CGI handler state / return value
@@ -124,7 +124,7 @@ typedef struct {
 #define ROUTE_WS(path, callback)                   ROUTE_CGI_ARG((path), cgiWebsocket, (WsConnectedCb)(callback))
 
 /** Catch-all filesystem route */
-#define ROUTE_FILESYSTEM()                             ROUTE_CGI("*", cgiEspFsHook)
+#define ROUTE_FILESYSTEM()                         ROUTE_CGI("*", cgiEspFsHook)
 
 #define ROUTE_END() {NULL, NULL, NULL, NULL}
 
