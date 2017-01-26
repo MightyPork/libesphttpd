@@ -441,11 +441,11 @@ httpd_cgi_state ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, 
 	else if (strcmp(token, "WiFiapwarn")==0) {
 		x=wifi_get_opmode();
 		if (x==SOFTAP_MODE) { // 2
-			strcpy(buff, "<b>Can't scan in this mode.</b> Switch to <a href=\"/wifi/setmode?mode=3\">Client+AP</a>.");
+			strcpy(buff, "<b>Can't scan in AP only.</b> <a href=\"/wifi/setmode?mode=3\">Enable client</a>.");
 		} else if (x==STATIONAP_MODE) { // 3
-			strcpy(buff, "Switch mode: <a href=\"/wifi/setmode?mode=1\">Client only</a>, <a href=\"/wifi/setmode?mode=2\">AP only</a>");
+			strcpy(buff, "Switch: <a href=\"/wifi/setmode?mode=1\">Client only</a>, <a href=\"/wifi/setmode?mode=2\">AP only</a>");
 		} else { // 1
-			strcpy(buff, "Switch mode: <a href=\"/wifi/setmode?mode=3\">Client+AP</a>, <a href=\"/wifi/setmode?mode=2\">AP only</a>");
+			strcpy(buff, "Switch: <a href=\"/wifi/setmode?mode=3\">Client+AP</a>, <a href=\"/wifi/setmode?mode=2\">AP only</a>");
 		}
 	}
 	httpdSend(connData, buff, -1);
