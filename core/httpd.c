@@ -760,6 +760,13 @@ void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, char *remIp, int remPort, 
 	int x, r;
 	char *p, *e;
 	httpdPlatLock();
+
+	HttpdConnData *conn=httpdFindConnData(rconn, remIp, remPort);
+	if (conn==NULL) {
+		httpdPlatUnlock();
+		return;
+	}
+
 	char *sendBuff=malloc(HTTPD_MAX_SENDBUFF_LEN);
 	if (sendBuff==NULL) {
 		error("Malloc sendBuff failed!");
@@ -767,11 +774,6 @@ void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, char *remIp, int remPort, 
 		return;
 	}
 
-	HttpdConnData *conn=httpdFindConnData(rconn, remIp, remPort);
-	if (conn==NULL) {
-		httpdPlatUnlock();
-		return;
-	}
 	conn->priv->sendBuff=sendBuff;
 	conn->priv->sendBuffLen=0;
 	conn->priv->corsToken[0] = 0;

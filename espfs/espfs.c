@@ -185,6 +185,7 @@ EspFsFile ICACHE_FLASH_ATTR *espFsOpen(const char *fileName) {
 #endif
 			} else {
 				error("[EspFS] Invalid compression: %d", h.compression);
+				free(r);
 				return NULL;
 			}
 			return r;
