@@ -4,17 +4,31 @@
 #define HTTPDVER "0.4"
 
 //Max length of request head. This is statically allocated for each connection.
+#ifndef HTTPD_MAX_HEAD_LEN
 #define HTTPD_MAX_HEAD_LEN		1024
+#endif
+
 //Max post buffer len. This is dynamically malloc'ed if needed.
+#ifndef HTTPD_MAX_POST_LEN
 #define HTTPD_MAX_POST_LEN		2048
+#endif
+
 //Max send buffer len. This is allocated on the stack.
+#ifndef HTTPD_MAX_SENDBUFF_LEN
 #define HTTPD_MAX_SENDBUFF_LEN	2048
+#endif
+
 //If some data can't be sent because the underlaying socket doesn't accept the data (like the nonos
 //layer is prone to do), we put it in a backlog that is dynamically malloc'ed. This defines the max
 //size of the backlog.
+#ifndef HTTPD_MAX_BACKLOG_SIZE
 #define HTTPD_MAX_BACKLOG_SIZE	(4*1024)
+#endif
+
 //Max len of CORS token. This is allocated in each connection
+#ifndef HTTPD_MAX_CORS_TOKEN_LEN
 #define HTTPD_MAX_CORS_TOKEN_LEN      256
+#endif
 
 /**
  * CGI handler state / return value
