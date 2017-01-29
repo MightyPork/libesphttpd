@@ -1,7 +1,7 @@
 #ifndef HTTPD_H
 #define HTTPD_H
 
-#define HTTPDVER "0.4"
+#define HTTPDVER "0.4-custom2"
 
 //Max length of request head. This is statically allocated for each connection.
 #ifndef HTTPD_MAX_HEAD_LEN
