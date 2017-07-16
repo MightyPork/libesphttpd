@@ -104,7 +104,7 @@ static int ICACHE_FLASH_ATTR sendFrameHead(Websock *ws, int opcode, int len) {
 	} else {
 		buf[i++]=len;
 	}
-	dbg("WS: Sent frame head for payload of %d bytes.", len);
+//	dbg("WS: Sent frame head for payload of %d bytes.", len);
 	return httpdSend(ws->conn, buf, i);
 }
 
@@ -216,7 +216,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebSocketRecv(HttpdConnData *connData, char
 			//received here at the same time; no more byte iterations till the end of this frame.
 			//First, unmask the data
 			sl=len-i;
-			dbg("Ws: Frame payload. wasHeaderByte %d fr.len %d sl %d cmd 0x%x", wasHeaderByte, (int)ws->priv->fr.len, (int)sl, ws->priv->fr.flags);
+//			dbg("Ws: Frame payload. wasHeaderByte %d fr.len %d sl %d cmd 0x%x", wasHeaderByte, (int)ws->priv->fr.len, (int)sl, ws->priv->fr.flags);
 			if (sl > ws->priv->fr.len) sl=ws->priv->fr.len;
 			for (j=0; j<sl; j++) data[i+j]^=(ws->priv->fr.mask[(ws->priv->maskCtr++)&3]);
 
@@ -250,9 +250,9 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebSocketRecv(HttpdConnData *connData, char
 					if (ws->recvCb) ws->recvCb(ws, data+i, sl, flags);
 				}
 			} else if ((ws->priv->fr.flags&OPCODE_MASK)==OPCODE_CLOSE) {
-				dbg("WS: Got close frame");
+//				dbg("WS: Got close frame");
 				if (!ws->priv->closedHere) {
-					dbg("WS: Sending response close frame");
+//					dbg("WS: Sending response close frame");
 					cgiWebsocketClose(ws, ((data[i]<<8)&0xff00)+(data[i+1]&0xff));
 				}
 				r=HTTPD_CGI_DONE;

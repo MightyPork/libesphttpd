@@ -221,7 +221,7 @@ int ICACHE_FLASH_ATTR httpdFindArg(char *line, char *arg, char *buff, int buffLe
 		p=(char*)strstr(p, "&");
 		if (p!=NULL) p+=1;
 	}
-	error("Finding arg %s in %s: Not found :/", arg, line);
+	//error("Finding arg %s in %s: Not found :/", arg, line);
 	return -1; //not found
 }
 
@@ -302,6 +302,7 @@ void ICACHE_FLASH_ATTR httpdEndHeaders(HttpdConnData *conn) {
 
 //Redirect to the given URL.
 void ICACHE_FLASH_ATTR httpdRedirect(HttpdConnData *conn, char *newUrl) {
+	dbg("Redirecting to %s", newUrl);
 	httpdStartResponse(conn, 302);
 	httpdHeader(conn, "Location", newUrl);
 	httpdEndHeaders(conn);
