@@ -129,11 +129,12 @@ serveStaticFile(HttpdConnData *connData, const char* filepath) {
 
 		connData->cgiData=file;
 		httpdStartResponse(connData, 200);
-		httpdHeader(connData, "Content-Type", httpdGetMimetype(filepath));
+		const char *mime = httpdGetMimetype(filepath);
+		httpdHeader(connData, "Content-Type", mime);
 		if (isGzip) {
 			httpdHeader(connData, "Content-Encoding", "gzip");
 		}
-		httpdHeader(connData, "Cache-Control", "max-age=3600, must-revalidate");
+		httpdAddCacheHeaders(connData, mime);
 		httpdEndHeaders(connData);
 		return HTTPD_CGI_MORE;
 	}
@@ -229,7 +230,9 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 		}
 		connData->cgiData=tpd;
 		httpdStartResponse(connData, 200);
-		httpdHeader(connData, "Content-Type", httpdGetMimetype(connData->url));
+		const char *mime = httpdGetMimetype(connData->url);
+		httpdHeader(connData, "Content-Type", mime);
+		httpdAddCacheHeaders(connData, mime);
 		httpdEndHeaders(connData);
 		return HTTPD_CGI_MORE;
 	}
@@ -295,8 +298,33 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 					//Go collect normal chars again.
 					e=&buff[x+1];
 					tpd->tokenPos=-1;
-				} else {
-					if (tpd->tokenPos<(sizeof(tpd->token)-1)) tpd->token[tpd->tokenPos++]=buff[x];
+				}
+				else {
+					// Add char to the token buf
+					char c = buff[x];
+					bool outOfSpace = tpd->tokenPos >= (sizeof(tpd->token) - 1);
+					if (outOfSpace ||
+						(   !(c >= 'a' && c <= 'z') &&
+							!(c >= 'A' && c <= 'Z') &&
+							!(c >= '0' && c <= '9') &&
+							c != '.' && c != '_' && c != '-'
+						)) {
+						// looks like we collected some garbage
+						httpdSend(connData, "%", 1);
+						if (tpd->tokenPos > 0) {
+							httpdSend(connData, tpd->token, tpd->tokenPos);
+						}
+						// the bad char
+						httpdSend(connData, &c, 1);
+
+						//Go collect normal chars again.
+						e=&buff[x+1];
+						tpd->tokenPos=-1;
+					}
+					else {
+						// collect it
+						tpd->token[tpd->tokenPos++] = c;
+					}
 				}
 			}
 		}

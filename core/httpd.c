@@ -73,6 +73,8 @@ static const ICACHE_RODATA_ATTR MimeMap mimeTypes[]={
 	{"jpg", "image/jpeg"},
 	{"jpeg", "image/jpeg"},
 	{"png", "image/png"},
+	{"gif", "image/gif"},
+	{"bmp", "image/bmp"},
 	{"svg", "image/svg+xml"},
 	{"xml", "text/xml"},
 	{"json", "application/json"},
@@ -88,13 +90,6 @@ const char ICACHE_FLASH_ATTR *httpdGetMimetype(const char *url) {
 	if (*ext=='.') ext++;
 
 	while (mimeTypes[i].ext!=NULL && strcasecmp(ext, mimeTypes[i].ext)!=0) i++;
-
-	if (mimeTypes[i].ext==NULL) {
-		// we didn't find any proper match, check for common API paths ("pretty URLs")
-		if (strstarts(url, "/json/")) {
-			return "application/json";
-		}
-	}
 
 	return mimeTypes[i].mimetype;
 }
@@ -127,6 +122,22 @@ const char ICACHE_FLASH_ATTR *code2str(int code)
 			if (code >= 400) return "Client Error";
 			return "OK";
 	}
+}
+
+/**
+ * Add sensible cache control headers to avoid needless asset reloading
+ *
+ * @param connData
+ * @param mime - mime type string
+ */
+void httpdAddCacheHeaders(HttpdConnData *connData, const char *mime)
+{
+	if (streq(mime, "text/html")) return;
+	if (streq(mime, "text/plain")) return;
+	if (streq(mime, "text/csv")) return;
+	if (streq(mime, "application/json")) return;
+
+	httpdHeader(connData, "Cache-Control", "max-age=3600, public, must-revalidate");
 }
 
 //Looks up the connData info for a specific connection
@@ -587,13 +598,18 @@ static void ICACHE_FLASH_ATTR httpdProcessRequest(HttpdConnData *conn) {
 		//Look up URL in the built-in URL table.
 		while (builtInUrls[i].url!=NULL) {
 			int match=0;
+			const char const * route = builtInUrls[i].url;
 			//See if there's a literal match
-			if (strcmp(builtInUrls[i].url, conn->url)==0) match=1;
-			//See if there's a wildcard match
-			if (builtInUrls[i].url[strlen(builtInUrls[i].url)-1]=='*' &&
-					strncmp(builtInUrls[i].url, conn->url, strlen(builtInUrls[i].url)-1)==0) match=1;
+			if (streq(route, conn->url)) match=1;
+			//See if there's a wildcard match (*)
+			if (last_char(route) == '*' &&
+					strneq(route, conn->url, strlen(route)-1)) match=1;
+			// Optional slash (/?)
+			if (last_char(route) == '?' && last_char_n(route, 2) == '/' &&
+				strneq(route, conn->url, strlen(route)-2) &&
+				strlen(conn->url) <= strlen(route)-1) match=1;
 			if (match) {
-				dbg("Matched route #%d, url=%s", i, builtInUrls[i].url);
+				dbg("Matched route #%d, url=%s", i, route);
 				conn->cgiData=NULL;
 				conn->cgi=builtInUrls[i].cgiCb;
 				conn->cgiArg=builtInUrls[i].cgiArg;

@@ -163,6 +163,7 @@ void httpdFlushSendBuffer(HttpdConnData *conn);
 void httpdContinue(HttpdConnData *conn);
 void httpdConnSendStart(HttpdConnData *conn);
 void httpdConnSendFinish(HttpdConnData *conn);
+void httpdAddCacheHeaders(HttpdConnData *connData, const char *mime);
 
 //Platform dependent code should call these.
 void httpdSentCb(ConnTypePtr conn, char *remIp, int remPort);
