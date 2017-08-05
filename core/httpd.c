@@ -219,11 +219,12 @@ int ICACHE_FLASH_ATTR httpdUrlDecode(char *val, int valLen, char *ret, int retLe
 int ICACHE_FLASH_ATTR httpdFindArg(char *line, char *arg, char *buff, int buffLen) {
 	char *p, *e;
 	if (line==NULL) return -1;
+	const int arglen=(int)strlen(arg);
 	p=line;
 	while(p!=NULL && *p!='\n' && *p!='\r' && *p!=0) {
 //		dbg("findArg: %s", p);
-		if (strstarts(p, arg) && p[strlen(arg)]=='=') {
-			p+=strlen(arg)+1; //move p to start of value
+		if (strstarts(p, arg) && p[arglen]=='=') {
+			p+=arglen+1; //move p to start of value
 			e=(char*)strstr(p, "&");
 			if (e==NULL) e=p+strlen(p);
 //			dbg("findArg: val %s len %d", p, (e-p));
