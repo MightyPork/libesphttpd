@@ -433,6 +433,73 @@ static char ICACHE_FLASH_ATTR httpdHexNibble(int val) {
 	return 'A'+(val-10);
 }
 
+#define httpdSend_orDie(conn, data, len) do { if (!httpdSend((conn), (data), (len))) return false; } while (0)
+
+/* encode for HTML. returns 0 or 1 - 1 = success */
+int ICACHE_FLASH_ATTR httpdSend_html(HttpdConnData *conn, const char *data, int len)
+{
+	int start = 0, end = 0;
+	char c;
+	if (conn->conn==NULL) return 0;
+	if (len < 0) len = (int) strlen(data);
+	if (len==0) return 0;
+
+	for (end = 0; end < len; end++) {
+		c = data[end];
+		if (c == 0) {
+			// we found EOS
+			break;
+		}
+
+		if (c == '"' || c == '\'' || c == '<' || c == '>') {
+			if (start < end) httpdSend_orDie(conn, data + start, end - start);
+			start = end + 1;
+		}
+
+		if (c == '"') httpdSend_orDie(conn, "&#34;", 5);
+		else if (c == '\'') httpdSend_orDie(conn, "&#39;", 5);
+		else if (c == '<') httpdSend_orDie(conn, "&lt;", 4);
+		else if (c == '>') httpdSend_orDie(conn, "&gt;", 4);
+	}
+
+	if (start < end) httpdSend_orDie(conn, data + start, end - start);
+	return 1;
+}
+
+/* encode for JS. returns 0 or 1 - 1 = success */
+int ICACHE_FLASH_ATTR httpdSend_js(HttpdConnData *conn, const char *data, int len)
+{
+	int start = 0, end = 0;
+	char c;
+	if (conn->conn==NULL) return 0;
+	if (len < 0) len = (int) strlen(data);
+	if (len==0) return 0;
+
+	for (end = 0; end < len; end++) {
+		c = data[end];
+		if (c == 0) {
+			// we found EOS
+			break;
+		}
+
+		if (c == '"' || c == '\\' || c == '\'' || c == '<' || c == '>' || c == '\n' || c == '\r') {
+			if (start < end) httpdSend_orDie(conn, data + start, end - start);
+			start = end + 1;
+		}
+
+		if (c == '"') httpdSend_orDie(conn, "\\\"", 2);
+		else if (c == '\'') httpdSend_orDie(conn, "\\'", 2);
+		else if (c == '\\') httpdSend_orDie(conn, "\\\\", 2);
+		else if (c == '<') httpdSend_orDie(conn, "\\u003C", 6);
+		else if (c == '>') httpdSend_orDie(conn, "\\u003E", 6);
+		else if (c == '\n') httpdSend_orDie(conn, "\\n", 2);
+		else if (c == '\r') httpdSend_orDie(conn, "\\r", 2);
+	}
+
+	if (start < end) httpdSend_orDie(conn, data + start, end - start);
+	return 1;
+}
+
 //Function to send any data in conn->priv->sendBuff. Do not use in CGIs unless you know what you
 //are doing! Also, if you do set conn->cgi to NULL to indicate the connection is closed, do it BEFORE
 //calling this.

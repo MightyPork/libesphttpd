@@ -159,6 +159,8 @@ void httpdHeader(HttpdConnData *conn, const char *field, const char *val);
 void httpdEndHeaders(HttpdConnData *conn);
 int httpdGetHeader(HttpdConnData *conn, char *header, char *ret, int retLen);
 int httpdSend(HttpdConnData *conn, const char *data, int len);
+int httpdSend_js(HttpdConnData *conn, const char *data, int len);
+int httpdSend_html(HttpdConnData *conn, const char *data, int len);
 void httpdFlushSendBuffer(HttpdConnData *conn);
 void httpdContinue(HttpdConnData *conn);
 void httpdConnSendStart(HttpdConnData *conn);

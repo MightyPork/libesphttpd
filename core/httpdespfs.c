@@ -163,6 +163,12 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsHook(HttpdConnData *connData) {
 
 //cgiEspFsTemplate can be used as a template.
 
+typedef enum {
+	ENCODE_PLAIN = 0,
+	ENCODE_HTML,
+	ENCODE_JS,
+} TplEncode;
+
 typedef struct {
 	EspFsFile *file;
 	void *tplArg;
@@ -176,13 +182,28 @@ typedef struct {
 	int buff_x;
 	int buff_sp;
 	char *buff_e;
+	TplEncode tokEncode;
 } TplData;
+
+
+int ICACHE_FLASH_ATTR
+tplSend(HttpdConnData *conn, const char *str, int len)
+{
+	TplData *tpd=conn->cgiData;
+
+	if (tpd->tokEncode == ENCODE_PLAIN) return httpdSend(conn, str, len);
+	if (tpd->tokEncode == ENCODE_HTML) return httpdSend_html(conn, str, len);
+	if (tpd->tokEncode == ENCODE_JS) return httpdSend_js(conn, str, len);
+	return 0;
+}
+
 
 httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 	TplData *tpd=connData->cgiData;
 	int len;
 	int x, sp=0;
 	char *e=NULL;
+	int tokOfs;
 
 	if (connData->conn==NULL) {
 		//Connection aborted. Clean up.
@@ -279,6 +300,32 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 						if (!tpd->chunk_resume) {
 							//This is an actual token.
 							tpd->token[tpd->tokenPos++] = 0; //zero-terminate token
+
+							tokOfs = 0;
+							tpd->tokEncode = ENCODE_PLAIN;
+							if (strneq(tpd->token, "html:", 5)) {
+								tokOfs = 5;
+								tpd->tokEncode = ENCODE_HTML;
+							}
+							else if (strneq(tpd->token, "h:", 2)) {
+								tokOfs = 2;
+								tpd->tokEncode = ENCODE_HTML;
+							}
+							else if (strneq(tpd->token, "js:", 3)) {
+								tokOfs = 3;
+								tpd->tokEncode = ENCODE_JS;
+							}
+							else if (strneq(tpd->token, "j:", 2)) {
+								tokOfs = 2;
+								tpd->tokEncode = ENCODE_JS;
+							}
+
+							// do the shifting
+							if (tokOfs > 0) {
+								for(int i=tokOfs; i<=tpd->tokenPos; i++) {
+									tpd->token[i-tokOfs] = tpd->token[i];
+								}
+							}
 						}
 
 						tpd->chunk_resume = false;
@@ -307,7 +354,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 						(   !(c >= 'a' && c <= 'z') &&
 							!(c >= 'A' && c <= 'Z') &&
 							!(c >= '0' && c <= '9') &&
-							c != '.' && c != '_' && c != '-'
+							c != '.' && c != '_' && c != '-' && c != ':'
 						)) {
 						// looks like we collected some garbage
 						httpdSend(connData, "%", 1);

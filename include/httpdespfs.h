@@ -11,5 +11,6 @@ typedef httpd_cgi_state (* TplCallback)(HttpdConnData *connData, char *token, vo
 
 httpd_cgi_state cgiEspFsHook(HttpdConnData *connData);
 httpd_cgi_state cgiEspFsTemplate(HttpdConnData *connData);
+int tplSend(HttpdConnData *conn, const char *str, int len);
 
 #endif
