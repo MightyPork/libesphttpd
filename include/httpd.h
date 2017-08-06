@@ -1,7 +1,12 @@
 #ifndef HTTPD_H
 #define HTTPD_H
 
-#define HTTPDVER "0.4-custom2"
+// we must not use this macro outside the library, as the git hash is not defined there
+#define HTTPDVER "0.4+MightyPork/libesphttpd#" GIT_HASH
+
+#ifndef SERVERNAME_PREFIX
+#define SERVERNAME_PREFIX "esp8266-httpd "
+#endif
 
 //Max length of request head. This is statically allocated for each connection.
 #ifndef HTTPD_MAX_HEAD_LEN
@@ -142,6 +147,7 @@ typedef struct {
 
 #define ROUTE_END() {NULL, NULL, NULL, NULL}
 
+const char *httpdGetVersion(void);
 
 httpd_cgi_state cgiRedirect(HttpdConnData *connData);
 httpd_cgi_state cgiRedirectToHostname(HttpdConnData *connData);

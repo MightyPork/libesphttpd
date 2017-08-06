@@ -50,12 +50,15 @@ EXTRA_INCDIR	= ./include \
 					. \
 					lib/heatshrink/
 
-
 # compiler flags using during compilation of source files
 CFLAGS		= -Os -ggdb -std=c99 -Werror -Wpointer-arith -Wundef -Wall -Wl,-EL -fno-inline-functions \
 		-nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH \
 		-Wno-address -DHTTPD_MAX_CONNECTIONS=$(HTTPD_MAX_CONNECTIONS) -DHTTPD_STACKSIZE=$(HTTPD_STACKSIZE) \
+		-DGIT_HASH='"$(shell git rev-parse --short HEAD)"'
 
+ifdef SERVERNAME_PREFIX
+CFLAGS += -DSERVERNAME_PREFIX='"$(SERVERNAME_PREFIX)"'
+endif
 
 # various paths from the SDK used in this project
 SDK_LIBDIR	= lib

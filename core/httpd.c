@@ -140,6 +140,11 @@ void httpdAddCacheHeaders(HttpdConnData *connData, const char *mime)
 	httpdHeader(connData, "Cache-Control", "max-age=3600, public, must-revalidate");
 }
 
+const char *httpdGetVersion(void)
+{
+	return HTTPDVER;
+}
+
 //Looks up the connData info for a specific connection
 static HttpdConnData ICACHE_FLASH_ATTR *httpdFindConnData(ConnTypePtr conn, char *remIp, int remPort) {
 	for (int i=0; i<HTTPD_MAX_CONNECTIONS; i++) {
@@ -286,7 +291,7 @@ void ICACHE_FLASH_ATTR httpdStartResponse(HttpdConnData *conn, int code) {
 	const char *connStr="Connection: close\r\n";
 	if (conn->priv->flags&HFL_CHUNKED) connStr="Transfer-Encoding: chunked\r\n";
 	if (conn->priv->flags&HFL_NOCONNECTIONSTR) connStr="";
-	l=sprintf(buff, "HTTP/1.%d %d %s\r\nServer: esp8266-httpd/"HTTPDVER"\r\n%s",
+	l=sprintf(buff, "HTTP/1.%d %d %s\r\nServer: "SERVERNAME_PREFIX HTTPDVER"\r\n%s",
 			(conn->priv->flags&HFL_HTTP11)?1:0, 
 			code,
 			code2str(code),
