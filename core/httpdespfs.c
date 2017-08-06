@@ -189,9 +189,10 @@ typedef struct {
 int ICACHE_FLASH_ATTR
 tplSend(HttpdConnData *conn, const char *str, int len)
 {
+	if (conn == NULL) return 0;
 	TplData *tpd=conn->cgiData;
 
-	if (tpd->tokEncode == ENCODE_PLAIN) return httpdSend(conn, str, len);
+	if (tpd == NULL || tpd->tokEncode == ENCODE_PLAIN) return httpdSend(conn, str, len);
 	if (tpd->tokEncode == ENCODE_HTML) return httpdSend_html(conn, str, len);
 	if (tpd->tokEncode == ENCODE_JS) return httpdSend_js(conn, str, len);
 	return 0;
