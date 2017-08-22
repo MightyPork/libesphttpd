@@ -82,3 +82,89 @@
 	} while(0)
 
 #endif // HTTPD_LOGGING_H
+
+
+// --------------- logging categories --------------------
+
+
+
+#ifndef DEBUG_ROUTER
+#define DEBUG_ROUTER 1
+#endif
+
+#ifndef DEBUG_ESPFS
+#define DEBUG_ESPFS 1
+#endif
+
+#ifndef DEBUG_WS
+#define DEBUG_WS 1
+#endif
+
+#ifndef DEBUG_HTTP
+#define DEBUG_HTTP 1
+#endif
+
+#ifndef DEBUG_CAPTDNS
+#define DEBUG_CAPTDNS 1
+#endif
+
+#if DEBUG_ROUTER
+#define router_warn warn
+#define router_dbg dbg
+#define router_error error
+#define router_info info
+#else
+#define router_dbg(...)
+#define router_warn(...)
+#define router_error(...)
+#define router_info(...)
+#endif
+
+#if DEBUG_ESPFS
+#define espfs_warn warn
+#define espfs_dbg dbg
+#define espfs_error error
+#define espfs_info info
+#else
+#define espfs_dbg(...)
+#define espfs_warn(...)
+#define espfs_error(...)
+#define espfs_info(...)
+#endif
+
+#if DEBUG_WS
+#define ws_warn warn
+#define ws_dbg dbg
+#define ws_error error
+#define ws_info info
+#else
+#define ws_dbg(...)
+#define ws_warn(...)
+#define ws_error(...)
+#define ws_info(...)
+#endif
+
+#if DEBUG_HTTP
+#define http_warn warn
+#define http_dbg dbg
+#define http_error error
+#define http_info info
+#else
+#define http_dbg(...)
+#define http_warn(...)
+#define http_error(...)
+#define http_info(...)
+#endif
+
+#if DEBUG_CAPTDNS
+#define cdns_warn warn
+#define cdns_dbg dbg
+#define cdns_error error
+#define cdns_info info
+#else
+#define cdns_dbg(...)
+#define cdns_warn(...)
+#define cdns_error(...)
+#define cdns_info(...)
+#endif
+

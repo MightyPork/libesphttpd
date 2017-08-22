@@ -60,6 +60,10 @@ ifdef SERVERNAME_PREFIX
 CFLAGS += -DSERVERNAME_PREFIX='"$(SERVERNAME_PREFIX)"'
 endif
 
+ifdef GLOBAL_CFLAGS
+CFLAGS += $(GLOBAL_CFLAGS)
+endif
+
 # various paths from the SDK used in this project
 SDK_LIBDIR	= lib
 SDK_LDDIR	= ld

@@ -104,7 +104,7 @@ static int ICACHE_FLASH_ATTR sendFrameHead(Websock *ws, int opcode, int len) {
 	} else {
 		buf[i++]=len;
 	}
-//	dbg("WS: Sent frame head for payload of %d bytes.", len);
+//	ws_dbg("WS: Sent frame head for payload of %d bytes.", len);
 	return httpdSend(ws->conn, buf, i);
 }
 
@@ -122,7 +122,7 @@ int ICACHE_FLASH_ATTR cgiWebsocketSend(Websock *ws, char *data, int len, int fla
 	if (!(flags&WEBSOCK_FLAG_MORE)) fl|=FLAG_FIN;
 	sendFrameHead(ws, fl, len);
 	if (len!=0) r=httpdSend(ws->conn, data, len);
-	httpdFlushSendBuffer(ws->conn);
+	r &= httpdFlushSendBuffer(ws->conn);
 	return r;
 }
 
@@ -133,7 +133,21 @@ int ICACHE_FLASH_ATTR cgiWebsockBroadcast(char *resource, char *data, int len, i
 	while (lw!=NULL) {
 		if (strcmp(lw->conn->url, resource)==0) {
 			httpdConnSendStart(lw->conn);
-			cgiWebsocketSend(lw, data, len, flags);
+			if (!cgiWebsocketSend(lw, data, len, flags)) {
+				// send failed, do not try further (assume memory is clogged due to max backlog size)
+
+				// HACK: If conn->conn is not NULL, {httpdConnSendFinish} would try to flush again
+				// (cgiWebsocketSend already tried to flush, and that's where the error came from, possibly)
+				// we remove it temporarily to bypass that
+				ConnTypePtr oldpriv = lw->conn->conn;
+				lw->conn->conn = NULL;
+				httpdConnSendFinish(lw->conn);
+				// -> and now we put it back for later
+				lw->conn->conn = oldpriv;
+
+				// Abort
+				return -1;
+			}
 			httpdConnSendFinish(lw->conn);
 			ret++;
 		}
@@ -142,6 +156,24 @@ int ICACHE_FLASH_ATTR cgiWebsockBroadcast(char *resource, char *data, int len, i
 	return ret;
 }
 
+/** this is used for estimation how full the ram is */
+void ICACHE_FLASH_ATTR cgiWebsockMeasureBacklog(char *resource, int *total, int *max)
+{
+	Websock *lw=llStart;
+	int bMax = 0;
+	int bTotal = 0;
+	while (lw!=NULL) {
+		if (strcmp(lw->conn->url, resource)==0) {
+			//lw->conn
+			int bs = httpGetBacklogSize(lw->conn);
+			bTotal += bs;
+			if (bs > bMax) bMax = bs;
+		}
+		lw=lw->priv->next;
+	}
+	*total = bTotal;
+	*max = bMax;
+}
 
 void ICACHE_FLASH_ATTR cgiWebsocketClose(Websock *ws, int reason) {
 	char rs[2]={reason>>8, reason&0xff};
@@ -153,7 +185,7 @@ void ICACHE_FLASH_ATTR cgiWebsocketClose(Websock *ws, int reason) {
 
 
 static void ICACHE_FLASH_ATTR websockFree(Websock *ws) {
-	dbg("Ws: Free");
+	ws_dbg("Ws: Free");
 	if (ws->closeCb) ws->closeCb(ws);
 	//Clean up linked list
 	if (llStart==ws) {
@@ -216,7 +248,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebSocketRecv(HttpdConnData *connData, char
 			//received here at the same time; no more byte iterations till the end of this frame.
 			//First, unmask the data
 			sl=len-i;
-//			dbg("Ws: Frame payload. wasHeaderByte %d fr.len %d sl %d cmd 0x%x", wasHeaderByte, (int)ws->priv->fr.len, (int)sl, ws->priv->fr.flags);
+//			ws_dbg("Ws: Frame payload. wasHeaderByte %d fr.len %d sl %d cmd 0x%x", wasHeaderByte, (int)ws->priv->fr.len, (int)sl, ws->priv->fr.flags);
 			if (sl > ws->priv->fr.len) sl=ws->priv->fr.len;
 			for (j=0; j<sl; j++) data[i+j]^=(ws->priv->fr.mask[(ws->priv->maskCtr++)&3]);
 
@@ -250,15 +282,15 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebSocketRecv(HttpdConnData *connData, char
 					if (ws->recvCb) ws->recvCb(ws, data+i, sl, flags);
 				}
 			} else if ((ws->priv->fr.flags&OPCODE_MASK)==OPCODE_CLOSE) {
-//				dbg("WS: Got close frame");
+//				ws_dbg("WS: Got close frame");
 				if (!ws->priv->closedHere) {
-//					dbg("WS: Sending response close frame");
+//					ws_dbg("WS: Sending response close frame");
 					cgiWebsocketClose(ws, ((data[i]<<8)&0xff00)+(data[i+1]&0xff));
 				}
 				r=HTTPD_CGI_DONE;
 				break;
 			} else {
-				if (!ws->priv->frameCont) error("WS: Unknown opcode 0x%X", ws->priv->fr.flags&OPCODE_MASK);
+				if (!ws->priv->frameCont) ws_error("WS: Unknown opcode 0x%X", ws->priv->fr.flags&OPCODE_MASK);
 			}
 			i+=sl-1;
 			ws->priv->fr.len-=sl;
@@ -286,7 +318,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebsocket(HttpdConnData *connData) {
 	sha1nfo s;
 	if (connData->conn==NULL) {
 		//Connection aborted. Clean up.
-		dbg("WS: Cleanup");
+		ws_dbg("WS: Cleanup");
 		if (connData->cgiData) {
 			Websock *ws=(Websock*)connData->cgiData;
 			websockFree(ws);
@@ -300,7 +332,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebsocket(HttpdConnData *connData) {
 //		httpd_printf("WS: First call\n");
 		//First call here. Check if client headers are OK, send server header.
 		i=httpdGetHeader(connData, "Upgrade", buff, sizeof(buff)-1);
-		dbg("WS: Upgrade: %s", buff);
+		ws_dbg("WS: Upgrade: %s", buff);
 		if (i && strcasecmp(buff, "websocket")==0) {
 			i=httpdGetHeader(connData, "Sec-WebSocket-Key", buff, sizeof(buff)-1);
 			if (i) {
@@ -309,14 +341,14 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebsocket(HttpdConnData *connData) {
 				// Alloc structs
 				connData->cgiData=malloc(sizeof(Websock));
 				if (connData->cgiData==NULL) {
-					error("Can't allocate mem for websocket");
+					ws_error("Can't allocate mem for websocket");
 					return HTTPD_CGI_DONE;
 				}
 				memset(connData->cgiData, 0, sizeof(Websock));
 				Websock *ws=(Websock*)connData->cgiData;
 				ws->priv=malloc(sizeof(WebsockPriv));
 				if (ws->priv==NULL) {
-					error("Can't allocate mem for websocket priv");
+					ws_error("Can't allocate mem for websocket priv");
 					free(connData->cgiData);
 					connData->cgiData=NULL;
 					return HTTPD_CGI_DONE;

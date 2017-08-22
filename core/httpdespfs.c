@@ -92,7 +92,7 @@ serveStaticFile(HttpdConnData *connData, const char* filepath) {
 
 	// invalid call.
 	if (filepath == NULL) {
-		error("serveStaticFile called with NULL path!");
+		espfs_error("serveStaticFile called with NULL path!");
 		return HTTPD_CGI_NOTFOUND;
 	}
 
@@ -218,7 +218,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 		//First call to this cgi. Open the file so we can read it.
 		tpd=(TplData *)malloc(sizeof(TplData));
 		if (tpd==NULL) {
-			error("Failed to malloc tpl struct");
+			espfs_error("Failed to malloc tpl struct");
 			return HTTPD_CGI_NOTFOUND;
 		}
 
@@ -228,7 +228,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 		// check for custom template URL
 		if (connData->cgiArg2 != NULL) {
 			filepath = connData->cgiArg2;
-			dbg("Using filepath %s", filepath);
+			espfs_dbg("Using filepath %s", filepath);
 		}
 
 		tpd->file = espFsOpen(filepath);
@@ -245,7 +245,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 		tpd->tplArg=NULL;
 		tpd->tokenPos=-1;
 		if (espFsFlags(tpd->file) & FLAG_GZIP) {
-			error("cgiEspFsTemplate: Trying to use gzip-compressed file %s as template!", connData->url);
+			espfs_error("cgiEspFsTemplate: Trying to use gzip-compressed file %s as template!", connData->url);
 			espFsClose(tpd->file);
 			free(tpd);
 			return HTTPD_CGI_NOTFOUND;
@@ -264,7 +264,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 	// resume the parser state from the last token,
 	// if subst. func wants more data to be sent.
 	if (tpd->chunk_resume) {
-		//dbg("Resuming tpl parser for multi-part subst");
+		//espfs_dbg("Resuming tpl parser for multi-part subst");
 		len = tpd->buff_len;
 		e = tpd->buff_e;
 		sp = tpd->buff_sp;
@@ -333,7 +333,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 
 						httpd_cgi_state status = ((TplCallback)(connData->cgiArg))(connData, tpd->token, &tpd->tplArg);
 						if (status == HTTPD_CGI_MORE) {
-//							dbg("Multi-part tpl subst, saving parser state");
+//							espfs_dbg("Multi-part tpl subst, saving parser state");
 							// wants to send more in this token's place.....
 							tpd->chunk_resume = true;
 							tpd->buff_len = len;
@@ -387,7 +387,7 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiEspFsTemplate(HttpdConnData *connData) {
 	if (len!=FILE_CHUNK_LEN) {
 		//We're done.
 		((TplCallback)(connData->cgiArg))(connData, NULL, &tpd->tplArg);
-		info("Template sent.");
+		espfs_info("Template sent.");
 		espFsClose(tpd->file);
 		free(tpd);
 		return HTTPD_CGI_DONE;

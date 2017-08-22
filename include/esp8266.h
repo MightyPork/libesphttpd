@@ -32,4 +32,3 @@
 #include "logging.h"
 #include "platform.h"
 #include "espmissingincludes.h"
-

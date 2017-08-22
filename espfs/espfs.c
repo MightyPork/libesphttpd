@@ -115,7 +115,7 @@ void ICACHE_FLASH_ATTR readFlashUnaligned(char *dst, const char *src, int len) {
 // Returns flags of opened file.
 int ICACHE_FLASH_ATTR espFsFlags(EspFsFile *fh) {
 	if (fh == NULL) {
-		error("[EspFS] File handle not ready");
+		espfs_error("[EspFS] File handle not ready");
 		return -1;
 	}
 
@@ -127,7 +127,7 @@ int ICACHE_FLASH_ATTR espFsFlags(EspFsFile *fh) {
 //Open a file and return a pointer to the file desc struct.
 EspFsFile ICACHE_FLASH_ATTR *espFsOpen(const char *fileName) {
 	if (espFsData == NULL) {
-		error("[EspFS] Call espFsInit first!");
+		espfs_error("[EspFS] Call espFsInit first!");
 		return NULL;
 	}
 	const char *p=espFsData;
@@ -144,11 +144,11 @@ EspFsFile ICACHE_FLASH_ATTR *espFsOpen(const char *fileName) {
 		spi_flash_read((uint32)p, (uint32*)&h, sizeof(EspFsHeader));
 
 		if (h.magic!=ESPFS_MAGIC) {
-			error("[EspFS] Magic mismatch. EspFS image broken.");
+			espfs_error("[EspFS] Magic mismatch. EspFS image broken.");
 			return NULL;
 		}
 		if (h.flags&FLAG_LASTFILE) {
-			dbg("[EspFS] End of image.");
+			espfs_dbg("[EspFS] End of image.");
 			return NULL;
 		}
 		//Grab the name of the file.
@@ -179,12 +179,12 @@ EspFsFile ICACHE_FLASH_ATTR *espFsOpen(const char *fileName) {
 				//Decoder params are stored in 1st byte.
 				readFlashUnaligned(&parm, r->posComp, 1);
 				r->posComp++;
-				dbg("[EspFS] Heatshrink compressed file; decode parms = %x", parm);
+				espfs_dbg("[EspFS] Heatshrink compressed file; decode parms = %x", parm);
 				dec=heatshrink_decoder_alloc(16, (parm>>4)&0xf, parm&0xf);
 				r->decompData=dec;
 #endif
 			} else {
-				error("[EspFS] Invalid compression: %d", h.compression);
+				espfs_error("[EspFS] Invalid compression: %d", h.compression);
 				free(r);
 				return NULL;
 			}
