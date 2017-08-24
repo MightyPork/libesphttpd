@@ -32,3 +32,9 @@
 #include "logging.h"
 #include "platform.h"
 #include "espmissingincludes.h"
+
+#define TIMER_START(pTimer, func, ms, repeated) do { \
+	os_timer_disarm((pTimer)); \
+	os_timer_setfn((pTimer), (func), NULL); \
+	os_timer_arm((pTimer), (ms), (repeated)); \
+} while (0)
