@@ -168,3 +168,8 @@
 #define cdns_info(...)
 #endif
 
+#if DEBUG_MALLOC
+#define mem_dbg dbg
+#else
+#define mem_dbg(...)
+#endif

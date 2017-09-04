@@ -81,6 +81,7 @@ void ICACHE_FLASH_ATTR httpdPlatInit(int port, int maxConnCt) {
 	httpdConn.proto.tcp=&httpdTcp;
 	espconn_regist_connectcb(&httpdConn, platConnCb);
 	espconn_accept(&httpdConn);
+	espconn_regist_time(&httpdConn, 2, 0); // Configure timeout
 	espconn_tcp_set_max_con_allow(&httpdConn, maxConnCt);
 }
 

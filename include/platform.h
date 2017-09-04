@@ -21,8 +21,9 @@ typedef RtosConnType* ConnTypePtr;
 #define strncpy(a, b, c) os_strncpy(a, b, c)
 #define strcmp(a, b) os_strcmp(a, b)
 #define strncmp(a, b, c) os_strncmp(a, b, c)
-#define malloc(x) os_malloc(x)
-#define free(x) os_free(x)
+
+//#define malloc(x) os_malloc(x)
+//#define free(x) os_free(x)
 #define memset(x, a, b) os_memset(x, a, b)
 #define memcpy(x, a, b) os_memcpy(x, a, b)
 #define strcat(a, b) os_strcat(a, b)

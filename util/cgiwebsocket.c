@@ -394,4 +394,3 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebsocket(HttpdConnData *connData) {
 
 	return HTTPD_CGI_MORE;
 }
-

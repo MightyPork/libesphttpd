@@ -2,6 +2,8 @@
 // Actually misnamed, as it also works for ESP32.
 // ToDo: Figure out better name
 
+#ifndef ESP8266_COMMON_H
+#define ESP8266_COMMON_H
 
 #include <ctype.h>
 #include <stdio.h>
@@ -38,3 +40,27 @@
 	os_timer_setfn((pTimer), (func), NULL); \
 	os_timer_arm((pTimer), (ms), (repeated)); \
 } while (0)
+
+#ifndef DEBUG_MALLOC
+#define DEBUG_MALLOC 0
+#endif
+
+#if DEBUG_MALLOC
+static inline void* my_malloc(size_t size, int line, const char *fn) {
+	void *p = os_malloc(size);
+	mem_dbg("*A (%4d) -> %p @ "__BASE_FILE__":%d %s", size, p, line, fn);
+	return p;
+}
+
+static inline void my_free(void *p, int line, const char *fn) {
+	os_free(p);
+	mem_dbg("*F %p @ "__BASE_FILE__":%d %s", p, line, fn);
+}
+#define malloc(siz) my_malloc(siz, __LINE__, __FUNCTION__)
+#define free(p) my_free(p, __LINE__, __FUNCTION__)
+#else
+#define malloc(siz) os_malloc(siz)
+#define free(p) os_free(p)
+#endif
+
+#endif // ESP8266_COMMON_H
