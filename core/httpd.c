@@ -137,7 +137,7 @@ void httpdAddCacheHeaders(HttpdConnData *connData, const char *mime)
 	if (streq(mime, "text/csv")) return;
 	if (streq(mime, "application/json")) return;
 
-	httpdHeader(connData, "Cache-Control", "max-age=3600, public, must-revalidate");
+	httpdHeader(connData, "Cache-Control", "max-age=7200, public, must-revalidate");
 }
 
 const char *httpdGetVersion(void)
