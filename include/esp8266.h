@@ -63,4 +63,8 @@ static inline void my_free(void *p, int line, const char *fn) {
 #define free(p) os_free(p)
 #endif
 
+
+
+#define ESP_CONST_DATA __attribute__((aligned(4))) __attribute__((section(".irom.text")))
+
 #endif // ESP8266_COMMON_H

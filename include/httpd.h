@@ -156,7 +156,7 @@ httpd_cgi_state cgiRedirectApClientToHostname(HttpdConnData *connData);
 void httpdRedirect(HttpdConnData *conn, char *newUrl);
 int httpdUrlDecode(char *val, int valLen, char *ret, int retLen);
 int httpdFindArg(char *line, char *arg, char *buff, int buffLen);
-void httpdInit(HttpdBuiltInUrl *fixedUrls, int port);
+void httpdInit(const HttpdBuiltInUrl *fixedUrls, int port);
 const char *httpdGetMimetype(const char *url);
 const char *httpdMethodName(httpd_method m);
 void httdSetTransferMode(HttpdConnData *conn, int mode);

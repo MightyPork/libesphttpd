@@ -17,7 +17,7 @@ Esp8266 http server - core routines
 #include "httpd-platform.h"
 
 //This gets set at init time.
-static HttpdBuiltInUrl *builtInUrls;
+static const HttpdBuiltInUrl *builtInUrls;
 
 typedef struct HttpSendBacklogItem HttpSendBacklogItem;
 
@@ -62,7 +62,7 @@ typedef struct {
 
 //The mappings from file extensions to mime types. If you need an extra mime type,
 //add it here.
-static const ICACHE_RODATA_ATTR MimeMap mimeTypes[]={
+static const MimeMap mimeTypes[] ESP_CONST_DATA ={
 	{"htm", "text/html"},
 	{"html", "text/html"},
 	{"css", "text/css"},
@@ -1023,7 +1023,7 @@ int ICACHE_FLASH_ATTR httpdConnectCb(ConnTypePtr conn, char *remIp, int remPort)
 }
 
 //Httpd initialization routine. Call this to kick off webserver functionality.
-void ICACHE_FLASH_ATTR httpdInit(HttpdBuiltInUrl *fixedUrls, int port) {
+void ICACHE_FLASH_ATTR httpdInit(const HttpdBuiltInUrl *fixedUrls, int port) {
 	int i;
 
 	for (i=0; i<HTTPD_MAX_CONNECTIONS; i++) {
