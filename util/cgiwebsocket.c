@@ -252,9 +252,11 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebSocketRecv(HttpdConnData *connData, char
 			if (sl > ws->priv->fr.len) sl=ws->priv->fr.len;
 			for (j=0; j<sl; j++) data[i+j]^=(ws->priv->fr.mask[(ws->priv->maskCtr++)&3]);
 
-//			httpd_printf("Unmasked: ");
-//			for (j=0; j<sl; j++) httpd_printf("%02X ", data[i+j]&0xff);
-//			httpd_printf("\n");
+//			if (DEBUG_WS) {
+//				ws_dbg("Unmasked: ");
+//				for (j = 0; j < sl; j++) httpd_printf("%02X ", data[i + j] & 0xff);
+//				ws_dbg("\n");
+//			}
 
 			//Inspect the header to see what we need to do.
 			if ((ws->priv->fr.flags&OPCODE_MASK)==OPCODE_PING) {
@@ -284,8 +286,12 @@ httpd_cgi_state ICACHE_FLASH_ATTR cgiWebSocketRecv(HttpdConnData *connData, char
 			} else if ((ws->priv->fr.flags&OPCODE_MASK)==OPCODE_CLOSE) {
 //				ws_dbg("WS: Got close frame");
 				if (!ws->priv->closedHere) {
-//					ws_dbg("WS: Sending response close frame");
-					cgiWebsocketClose(ws, ((data[i]<<8)&0xff00)+(data[i+1]&0xff));
+//					ws_dbg("WS: Sending response close frame, %x %x (i=%d, len=%d)", data[i], data[i+1], i, len);
+					int cause = 1000;
+					if (i <= len - 2) {
+						cause = ((data[i]<<8)&0xff00)+(data[i+1]&0xff);
+					}
+					cgiWebsocketClose(ws, cause);
 				}
 				r=HTTPD_CGI_DONE;
 				break;

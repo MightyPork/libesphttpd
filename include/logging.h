@@ -81,9 +81,6 @@
 		printf(" [W] " fmt "\x1b[0m"LOG_EOL, ##__VA_ARGS__); \
 	} while(0)
 
-#endif // HTTPD_LOGGING_H
-
-
 // --------------- logging categories --------------------
 
 
@@ -173,3 +170,5 @@
 #else
 #define mem_dbg(...)
 #endif
+
+#endif // HTTPD_LOGGING_H
