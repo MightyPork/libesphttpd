@@ -17,7 +17,7 @@ HTTP auth implementation. Only does basic authentication for now.
 #include "base64.h"
 
 httpd_cgi_state ICACHE_FLASH_ATTR authBasic(HttpdConnData *connData) {
-	const char *forbidden="401 Forbidden.";
+	const char *forbidden="401 Unauthorized.";
 	int no=0;
 	int r;
 	char hdr[(AUTH_MAX_USER_LEN+AUTH_MAX_PASS_LEN+2)*10];
