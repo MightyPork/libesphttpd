@@ -1,0 +1,4 @@
+This project is licensed under Mozilla Public License v 2.0 (see LICENSE.txt)
+
+Code by Jeroen Domburg and contributors is originally licensed under the BeerWare License, 
+however a permission was obtained to change the license to MPLv2.
