@@ -13,18 +13,6 @@
 #include <esp8266.h>
 #include <httpd.h>
 
-#if DEBUG_HTTPC
-#define httpc_warn warn
-#define httpc_dbg dbg
-#define httpc_error error
-#define httpc_info info
-#else
-#define httpc_dbg(...)
-#define httpc_warn(...)
-#define httpc_error(...)
-#define httpc_info(...)
-#endif
-
 #define HTTP_STATUS_GENERIC_ERROR  -1   // In case of TCP or DNS error the callback is called with this status.
 #define BUFFER_SIZE_MAX            5000 // Size of http responses that will cause an error.
 

@@ -83,8 +83,6 @@
 
 // --------------- logging categories --------------------
 
-
-
 #ifndef DEBUG_ROUTER
 #define DEBUG_ROUTER 1
 #endif
@@ -101,10 +99,19 @@
 #define DEBUG_HTTP 1
 #endif
 
+#ifndef DEBUG_HTTPC
+#define DEBUG_HTTPC 1
+#endif
+
 #ifndef DEBUG_CAPTDNS
 #define DEBUG_CAPTDNS 1
 #endif
 
+#ifndef DEBUG_MALLOC
+#define DEBUG_MALLOC 0
+#endif
+
+// router (resolving urls to serve)
 #if DEBUG_ROUTER
 #define router_warn warn
 #define router_dbg dbg
@@ -117,6 +124,7 @@
 #define router_info(...)
 #endif
 
+// filesystem
 #if DEBUG_ESPFS
 #define espfs_warn warn
 #define espfs_dbg dbg
@@ -129,6 +137,7 @@
 #define espfs_info(...)
 #endif
 
+// websocket
 #if DEBUG_WS
 #define ws_warn warn
 #define ws_dbg dbg
@@ -141,6 +150,7 @@
 #define ws_info(...)
 #endif
 
+// server
 #if DEBUG_HTTP
 #define http_warn warn
 #define http_dbg dbg
@@ -153,6 +163,20 @@
 #define http_info(...)
 #endif
 
+// client
+#if DEBUG_HTTPC
+#define httpc_warn warn
+#define httpc_dbg dbg
+#define httpc_error error
+#define httpc_info info
+#else
+#define httpc_dbg(...)
+#define httpc_warn(...)
+#define httpc_error(...)
+#define httpc_info(...)
+#endif
+
+// captive portal
 #if DEBUG_CAPTDNS
 #define cdns_warn warn
 #define cdns_dbg dbg
@@ -165,6 +189,7 @@
 #define cdns_info(...)
 #endif
 
+// all malloc usage
 #if DEBUG_MALLOC
 #define mem_dbg dbg
 #else
