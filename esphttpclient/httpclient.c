@@ -75,10 +75,35 @@ receive_callback(void *arg, char *buf, unsigned short len)
 	}
 
 	// Let's do the equivalent of a realloc().
-	const int new_size = req->buffer_size + len;
+	int new_size = req->buffer_size + len;
+
+	if (new_size > req->max_buffer_size) {
+		system_soft_wdt_feed();
+
+		httpc_warn("Long resp, truncate (got %d, %d more rx, max %d)",
+					req->buffer_size, len, req->max_buffer_size);
+
+		int nlen = (req->max_buffer_size - req->buffer_size);
+		if (nlen <= 0) {
+			req->buffer[req->buffer_size - 1] = '\0';
+
+			if (req->secure) {
+#ifdef USE_SECURE
+				espconn_secure_disconnect(conn);
+#endif
+			}
+			else {
+				espconn_disconnect(conn);
+			}
+			return;
+		}
+		len = (unsigned short) nlen;
+		new_size = req->buffer_size + len;
+	}
+
 	char *new_buffer;
-	if (new_size > HTTPCLIENT_DEF_MAX_LEN || NULL == (new_buffer = (char *) malloc(new_size))) {
-		httpc_error("Response too long (%d)", new_size);
+	if (NULL == (new_buffer = (char *) malloc(new_size))) {
+		httpc_error("Failed to alloc more bytes (%d)", new_size);
 		req->buffer[0] = '\0'; // Discard the buffer to avoid using an incomplete response.
 		if (req->secure) {
 #ifdef USE_SECURE
@@ -165,7 +190,6 @@ connect_callback(void *arg)
 					  "%s %s HTTP/1.1\r\n"
 						  "Host: %s:%d\r\n"
 						  "Connection: close\r\n"
-//						  "User-Agent: ESP8266\r\n"
 						  "%s"
 						  "%s"
 						  "\r\n",
@@ -240,14 +264,17 @@ disconnect_callback(void *arg)
 			else {
 				http_status = atoi(req->buffer + strlen(version10));
 				/* find body and zero terminate headers */
-				body = strstr(req->buffer, "\r\n\r\n") + 2;
-				*body++ = '\0';
-				*body++ = '\0';
+				char * headend = strstr(req->buffer, "\r\n\r\n");
+				if (headend != NULL) {
+					body = headend + 2;
+					*body++ = '\0';
+					*body++ = '\0';
 
-				body_size = (int) (req->buffer_size - (body - req->buffer));
+					body_size = (int) (req->buffer_size - (body - req->buffer));
 
-				if (strstr(req->buffer, "Transfer-Encoding: chunked")) {
-					body_size = chunked_decode(body, body_size);
+					if (strstr(req->buffer, "Transfer-Encoding: chunked")) {
+						body_size = chunked_decode(body, body_size);
+					}
 				}
 			}
 		}
@@ -437,6 +464,7 @@ http_request(const httpclient_args *args, httpclient_cb user_callback)
 	req->timeout = HTTPCLIENT_DEF_TIMEOUT_MS;
 	req->method = args->method;
 	req->userData = args->userData;
+	req->max_buffer_size = (int) args->max_response_len;
 
 	ip_addr_t addr;
 	err_t error = espconn_gethostbyname((struct espconn *) req, // It seems we don't need a real espconn pointer here.
@@ -520,8 +548,8 @@ http_put(const char *url, const char *body, void *userData, httpclient_cb user_c
 
 void ICACHE_FLASH_ATTR
 http_callback_example(int http_status,
-					  const char *response_headers,
-					  const char *response_body,
+					  char *response_headers,
+					  char *response_body,
 					  size_t body_size,
 					  void *userData)
 {
@@ -536,8 +564,8 @@ http_callback_example(int http_status,
 
 void ICACHE_FLASH_ATTR
 http_callback_showstatus(int code,
-						 const char *response_headers,
-						 const char *response_body,
+						 char *response_headers,
+						 char *response_body,
 						 size_t body_size,
 						 void *userData)
 {

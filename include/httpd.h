@@ -175,6 +175,7 @@ void httpdConnSendFinish(HttpdConnData *conn);
 void httpdAddCacheHeaders(HttpdConnData *connData, const char *mime);
 
 int httpGetBacklogSize(const HttpdConnData *connData);
+void httdResponseOptions(HttpdConnData *conn, int cors);
 
 //Platform dependent code should call these.
 void httpdSentCb(ConnTypePtr conn, const char *remIp, int remPort);

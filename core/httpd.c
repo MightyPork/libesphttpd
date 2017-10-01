@@ -34,6 +34,7 @@ struct HttpSendBacklogItem {
 #define HFL_SENDINGBODY (1<<2)
 #define HFL_DISCONAFTERSENT (1<<3)
 #define HFL_NOCONNECTIONSTR (1<<4)
+#define HFL_NOCORS (1<<5)
 
 //Private data for http connection
 struct HttpdPriv {
@@ -297,6 +298,10 @@ void ICACHE_FLASH_ATTR httdSetTransferMode(HttpdConnData *conn, int mode) {
 	}
 }
 
+void ICACHE_FLASH_ATTR httdResponseOptions(HttpdConnData *conn, int cors) {
+	if (cors == 0) conn->priv->flags |= HFL_NOCORS;
+}
+
 //Start the response headers.
 void ICACHE_FLASH_ATTR httpdStartResponse(HttpdConnData *conn, int code) {
 	char buff[256];
@@ -312,9 +317,11 @@ void ICACHE_FLASH_ATTR httpdStartResponse(HttpdConnData *conn, int code) {
 			connStr);
 	httpdSend(conn, buff, l);
 
-	// CORS headers
-	httpdSend(conn, "Access-Control-Allow-Origin: *\r\n", -1);
-	httpdSend(conn, "Access-Control-Allow-Methods: GET,POST,OPTIONS\r\n", -1);
+	if (0==(conn->priv->flags&HFL_NOCORS)) {
+		// CORS headers
+		httpdSend(conn, "Access-Control-Allow-Origin: *\r\n", -1);
+		httpdSend(conn, "Access-Control-Allow-Methods: GET,POST,OPTIONS\r\n", -1);
+	}
 }
 
 //Send a http header.

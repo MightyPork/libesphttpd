@@ -30,8 +30,8 @@
  * More info at http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
  */
 typedef void (* httpclient_cb)(int http_status,
-							   const char *response_headers,
-							   const char *response_body,
+							   char *response_headers,
+							   char *response_body,
 							   size_t body_size,
 							   void *userData);
 
@@ -86,11 +86,11 @@ bool http_request(const httpclient_args *args, httpclient_cb user_callback);
 /**
  * Output on the UART.
  */
-void http_callback_example(int http_status, const char *response_headers, const char *response_body, size_t body_size, void *userData);
+void http_callback_example(int http_status, char *response_headers, char *response_body, size_t body_size, void *userData);
 
 /**
  * Show status code, and body on error. Error/warn log msg on error.
  */
-void http_callback_showstatus(int code, const char *response_headers, const char *response_body, size_t body_size, void *userData);
+void http_callback_showstatus(int code, char *response_headers, char *response_body, size_t body_size, void *userData);
 
 #endif
