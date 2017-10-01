@@ -31,7 +31,7 @@ typedef struct {
 	int timeout;
 	ETSTimer timeout_timer;
 	httpd_method method;
-	void *userArg;
+	void *userData;
 } request_args;
 
 static int ICACHE_FLASH_ATTR
@@ -77,7 +77,7 @@ receive_callback(void *arg, char *buf, unsigned short len)
 	// Let's do the equivalent of a realloc().
 	const int new_size = req->buffer_size + len;
 	char *new_buffer;
-	if (new_size > BUFFER_SIZE_MAX || NULL == (new_buffer = (char *) malloc(new_size))) {
+	if (new_size > HTTPCLIENT_DEF_MAX_LEN || NULL == (new_buffer = (char *) malloc(new_size))) {
 		httpc_error("Response too long (%d)", new_size);
 		req->buffer[0] = '\0'; // Discard the buffer to avoid using an incomplete response.
 		if (req->secure) {
@@ -153,18 +153,19 @@ connect_callback(void *arg)
 		req->headers[0] = '\0';
 	}
 
-	const size_t buflen = 69 + strlen(method)
+	const size_t buflen = 80 // for literals in tpl string + some margin
+						  + strlen(method)
 						  + strlen(req->path)
 						  + strlen(req->hostname)
 						  + strlen(req->headers)
-						  + strlen(post_headers) + 10; // safety margin
+						  + strlen(post_headers);
 	char buf[buflen];
 
 	int len = sprintf(buf,
 					  "%s %s HTTP/1.1\r\n"
 						  "Host: %s:%d\r\n"
 						  "Connection: close\r\n"
-						  "User-Agent: ESP8266\r\n"
+//						  "User-Agent: ESP8266\r\n"
 						  "%s"
 						  "%s"
 						  "\r\n",
@@ -253,7 +254,7 @@ disconnect_callback(void *arg)
 
 		httpc_info("Request completed.");
 		if (req->user_callback != NULL) { // Callback is optional.
-			req->user_callback(http_status, req->buffer, body, body_size, req->userArg);
+			req->user_callback(http_status, req->buffer, body, body_size, req->userData);
 		}
 
 		free_req(req);
@@ -300,8 +301,8 @@ http_timeout_callback(void *arg)
 		}
 
 		if (req->user_callback != NULL) {
-			// fire callback, so user can free the userArg
-			req->user_callback(HTTP_STATUS_TIMEOUT, req->buffer, "", 0, req->userArg);
+			// fire callback, so user can free the userData
+			req->user_callback(HTTP_STATUS_TIMEOUT, req->buffer, "", 0, req->userData);
 		}
 		free_req(req);
 	}
@@ -322,7 +323,7 @@ dns_callback(const char *hostname, ip_addr_t *addr, void *arg)
 	if (addr == NULL) {
 		httpc_error("DNS failed for %s", hostname);
 		if (req->user_callback != NULL) {
-			req->user_callback(HTTP_STATUS_GENERIC_ERROR, "", "", 0, req->userArg);
+			req->user_callback(HTTP_STATUS_GENERIC_ERROR, "", "", 0, req->userData);
 		}
 		free(req);
 	}
@@ -433,9 +434,9 @@ http_request(const httpclient_args *args, httpclient_cb user_callback)
 	req->buffer = (char *) malloc(1);
 	req->buffer[0] = '\0'; // Empty string.
 	req->user_callback = user_callback;
-	req->timeout = HTTP_REQUEST_TIMEOUT_MS;
+	req->timeout = HTTPCLIENT_DEF_TIMEOUT_MS;
 	req->method = args->method;
-	req->userArg = args->userArg;
+	req->userData = args->userData;
 
 	ip_addr_t addr;
 	err_t error = espconn_gethostbyname((struct espconn *) req, // It seems we don't need a real espconn pointer here.
@@ -467,14 +468,14 @@ void ICACHE_FLASH_ATTR httpclient_args_init(httpclient_args *args)
 	args->body = NULL;
 	args->method = HTTPD_METHOD_GET;
 	args->headers = NULL;
-	args->max_response_len = BUFFER_SIZE_MAX;
-	args->timeout = HTTP_REQUEST_TIMEOUT_MS;
-	args->userArg = NULL;
+	args->max_response_len = HTTPCLIENT_DEF_MAX_LEN;
+	args->timeout = HTTPCLIENT_DEF_TIMEOUT_MS;
+	args->userData = NULL;
 }
 
 
 bool ICACHE_FLASH_ATTR
-http_post(const char *url, const char *body, void *userArg, httpclient_cb user_callback)
+http_post(const char *url, const char *body, void *userData, httpclient_cb user_callback)
 {
 	httpclient_args args;
 	httpclient_args_init(&args);
@@ -482,28 +483,28 @@ http_post(const char *url, const char *body, void *userArg, httpclient_cb user_c
 	args.url = url;
 	args.body = body;
 	args.method = HTTPD_METHOD_POST;
-	args.userArg = userArg;
+	args.userData = userData;
 
 	return http_request(&args, user_callback);
 }
 
 
 bool ICACHE_FLASH_ATTR
-http_get(const char *url, void *userArg, httpclient_cb user_callback)
+http_get(const char *url, void *userData, httpclient_cb user_callback)
 {
 	httpclient_args args;
 	httpclient_args_init(&args);
 
 	args.url = url;
 	args.method = HTTPD_METHOD_GET;
-	args.userArg = userArg;
+	args.userData = userData;
 
 	return http_request(&args, user_callback);
 }
 
 
 bool ICACHE_FLASH_ATTR
-http_put(const char *url, const char *body, void *userArg, httpclient_cb user_callback)
+http_put(const char *url, const char *body, void *userData, httpclient_cb user_callback)
 {
 	httpclient_args args;
 	httpclient_args_init(&args);
@@ -511,7 +512,7 @@ http_put(const char *url, const char *body, void *userArg, httpclient_cb user_ca
 	args.url = url;
 	args.body = body;
 	args.method = HTTPD_METHOD_PUT;
-	args.userArg = userArg;
+	args.userData = userData;
 
 	return http_request(&args, user_callback);
 }
@@ -522,9 +523,9 @@ http_callback_example(int http_status,
 					  const char *response_headers,
 					  const char *response_body,
 					  size_t body_size,
-					  void *userArg)
+					  void *userData)
 {
-	(void)userArg;
+	(void) userData;
 	dbg("Response: code %d", http_status);
 	if (http_status != HTTP_STATUS_GENERIC_ERROR) {
 		dbg("len(headers) = %d, len(body) = %d", (int) strlen(response_headers), body_size);
@@ -533,16 +534,17 @@ http_callback_example(int http_status,
 }
 
 
-void ICACHE_FLASH_ATTR http_callback_showstatus(int code,
-												const char *response_headers,
-												const char *response_body,
-												size_t body_size,
-												void *userArg)
+void ICACHE_FLASH_ATTR
+http_callback_showstatus(int code,
+						 const char *response_headers,
+						 const char *response_body,
+						 size_t body_size,
+						 void *userData)
 {
 	(void) response_body;
 	(void) response_headers;
 	(void) body_size;
-	(void)userArg;
+	(void) userData;
 
 	if (code == 200) {
 		info("Response OK (200)");
