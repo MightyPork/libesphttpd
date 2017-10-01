@@ -87,7 +87,7 @@ struct WebsockPriv {
 static Websock *llStart=NULL;
 
 static int ICACHE_FLASH_ATTR sendFrameHead(Websock *ws, int opcode, int len) {
-	char buf[14];
+	u8 buf[14];
 	int i=0;
 	buf[i++]=opcode;
 	if (len>65535) {
@@ -105,10 +105,10 @@ static int ICACHE_FLASH_ATTR sendFrameHead(Websock *ws, int opcode, int len) {
 		buf[i++]=len;
 	}
 //	ws_dbg("WS: Sent frame head for payload of %d bytes.", len);
-	return httpdSend(ws->conn, buf, i);
+	return httpdSend(ws->conn, (char *) buf, i);
 }
 
-int ICACHE_FLASH_ATTR cgiWebsocketSend(Websock *ws, char *data, int len, int flags) {
+int ICACHE_FLASH_ATTR cgiWebsocketSend(Websock *ws, const char *data, int len, int flags) {
 	int r=0;
 	int fl=0;
 	// Continuation frame has opcode 0
@@ -127,7 +127,7 @@ int ICACHE_FLASH_ATTR cgiWebsocketSend(Websock *ws, char *data, int len, int fla
 }
 
 //Broadcast data to all websockets at a specific url. Returns the amount of connections sent to.
-int ICACHE_FLASH_ATTR cgiWebsockBroadcast(char *resource, char *data, int len, int flags) {
+int ICACHE_FLASH_ATTR cgiWebsockBroadcast(const char *resource, const char *data, int len, int flags) {
 	Websock *lw=llStart;
 	int ret=0;
 	while (lw!=NULL) {
@@ -157,7 +157,7 @@ int ICACHE_FLASH_ATTR cgiWebsockBroadcast(char *resource, char *data, int len, i
 }
 
 /** this is used for estimation how full the ram is */
-void ICACHE_FLASH_ATTR cgiWebsockMeasureBacklog(char *resource, int *total, int *max)
+void ICACHE_FLASH_ATTR cgiWebsockMeasureBacklog(const char *resource, int *total, int *max)
 {
 	Websock *lw=llStart;
 	int bMax = 0;

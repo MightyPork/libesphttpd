@@ -30,10 +30,10 @@ struct Websock {
 };
 
 httpd_cgi_state cgiWebsocket(HttpdConnData *connData);
-int cgiWebsocketSend(Websock *ws, char *data, int len, int flags);
+int cgiWebsocketSend(Websock *ws, const char *data, int len, int flags);
 void cgiWebsocketClose(Websock *ws, int reason);
 httpd_cgi_state cgiWebSocketRecv(HttpdConnData *connData, char *data, int len);
-int cgiWebsockBroadcast(char *resource, char *data, int len, int flags);
-void cgiWebsockMeasureBacklog(char *resource, int *total, int *max);
+int cgiWebsockBroadcast(const char *resource, const char *data, int len, int flags);
+void cgiWebsockMeasureBacklog(const char *resource, int *total, int *max);
 
 #endif

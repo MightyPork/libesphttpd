@@ -153,9 +153,9 @@ httpd_cgi_state cgiRedirect(HttpdConnData *connData);
 httpd_cgi_state cgiRedirectToHostname(HttpdConnData *connData);
 httpd_cgi_state cgiRedirectApClientToHostname(HttpdConnData *connData);
 
-void httpdRedirect(HttpdConnData *conn, char *newUrl);
-int httpdUrlDecode(char *val, int valLen, char *ret, int retLen);
-int httpdFindArg(char *line, char *arg, char *buff, int buffLen);
+void httpdRedirect(HttpdConnData *conn, const char *newUrl);
+int httpdUrlDecode(const char *val, int valLen, char *ret, int retLen);
+int httpdFindArg(const char *line, const char *arg, char *buff, int buffLen);
 void httpdInit(const HttpdBuiltInUrl *fixedUrls, int port);
 const char *httpdGetMimetype(const char *url);
 const char *httpdMethodName(httpd_method m);
@@ -163,7 +163,7 @@ void httdSetTransferMode(HttpdConnData *conn, int mode);
 void httpdStartResponse(HttpdConnData *conn, int code);
 void httpdHeader(HttpdConnData *conn, const char *field, const char *val);
 void httpdEndHeaders(HttpdConnData *conn);
-int httpdGetHeader(HttpdConnData *conn, char *header, char *ret, int retLen);
+int httpdGetHeader(HttpdConnData *conn, const char *header, char *ret, int retLen);
 int httpdSend(HttpdConnData *conn, const char *data, int len);
 int httpdSend_js(HttpdConnData *conn, const char *data, int len);
 int httpdSend_html(HttpdConnData *conn, const char *data, int len);
@@ -176,10 +176,10 @@ void httpdAddCacheHeaders(HttpdConnData *connData, const char *mime);
 int httpGetBacklogSize(const HttpdConnData *connData);
 
 //Platform dependent code should call these.
-void httpdSentCb(ConnTypePtr conn, char *remIp, int remPort);
-void httpdRecvCb(ConnTypePtr conn, char *remIp, int remPort, char *data, unsigned short len);
-void httpdDisconCb(ConnTypePtr conn, char *remIp, int remPort);
-int httpdConnectCb(ConnTypePtr conn, char *remIp, int remPort);
+void httpdSentCb(ConnTypePtr conn, const char *remIp, int remPort);
+void httpdRecvCb(ConnTypePtr conn, const char *remIp, int remPort, char *data, unsigned short len);
+void httpdDisconCb(ConnTypePtr conn, const char *remIp, int remPort);
+int httpdConnectCb(ConnTypePtr conn, const char *remIp, int remPort);
 
 
 #endif

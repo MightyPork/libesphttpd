@@ -41,7 +41,7 @@ static void ICACHE_FLASH_ATTR platDisconCb(void *arg) {
 
 static void ICACHE_FLASH_ATTR platRecvCb(void *arg, char *data, unsigned short len) {
 	ConnTypePtr conn=arg;
-	httpdRecvCb(conn, (char*)conn->proto.tcp->remote_ip, conn->proto.tcp->remote_port, data, len);
+	httpdRecvCb(conn, (const char*)conn->proto.tcp->remote_ip, conn->proto.tcp->remote_port, data, len);
 }
 
 static void ICACHE_FLASH_ATTR platSentCb(void *arg) {

@@ -158,7 +158,7 @@ int ICACHE_FLASH_ATTR httpGetBacklogSize(const HttpdConnData *conn)
 }
 
 //Looks up the connData info for a specific connection
-static HttpdConnData ICACHE_FLASH_ATTR *httpdFindConnData(ConnTypePtr conn, char *remIp, int remPort) {
+static HttpdConnData ICACHE_FLASH_ATTR *httpdFindConnData(ConnTypePtr conn, const char *remIp, int remPort) {
 	for (int i=0; i<HTTPD_MAX_CONNECTIONS; i++) {
 		if (connData[i] && connData[i]->remote_port == remPort &&
 						memcmp(connData[i]->remote_ip, remIp, 4) == 0) {
@@ -204,7 +204,7 @@ static int ICACHE_FLASH_ATTR  httpdHexVal(char c) {
 //Takes the valLen bytes stored in val, and converts it into at most retLen bytes that
 //are stored in the ret buffer. Returns the actual amount of bytes used in ret. Also
 //zero-terminates the ret buffer.
-int ICACHE_FLASH_ATTR httpdUrlDecode(char *val, int valLen, char *ret, int retLen) {
+int ICACHE_FLASH_ATTR httpdUrlDecode(const char *val, int valLen, char *ret, int retLen) {
 	int s=0, d=0;
 	int esced=0, escVal=0;
 	while (s<valLen && d<retLen) {
@@ -233,8 +233,8 @@ int ICACHE_FLASH_ATTR httpdUrlDecode(char *val, int valLen, char *ret, int retLe
 //zero-terminated result is written in buff, with at most buffLen bytes used. The
 //function returns the length of the result, or -1 if the value wasn't found. The 
 //returned string will be urldecoded already.
-int ICACHE_FLASH_ATTR httpdFindArg(char *line, char *arg, char *buff, int buffLen) {
-	char *p, *e;
+int ICACHE_FLASH_ATTR httpdFindArg(const char *line, const char *arg, char *buff, int buffLen) {
+	const char *p, *e;
 	if (line==NULL) return -1;
 	const int arglen=(int)strlen(arg);
 	p=line;
@@ -242,12 +242,12 @@ int ICACHE_FLASH_ATTR httpdFindArg(char *line, char *arg, char *buff, int buffLe
 		router_dbg("findArg: %s", p);
 		if (strstarts(p, arg) && p[arglen]=='=') {
 			p+=arglen+1; //move p to start of value
-			e=(char*)strstr(p, "&");
+			e=strstr(p, "&");
 			if (e==NULL) e=p+strlen(p);
 			router_dbg("findArg: val %s len %d", p, (e-p));
 			return httpdUrlDecode(p, (e-p), buff, buffLen);
 		}
-		p=(char*)strstr(p, "&");
+		p=strstr(p, "&");
 		if (p!=NULL) p+=1;
 	}
 	router_error("Finding arg %s in %s: Not found :/", arg, line);
@@ -256,7 +256,7 @@ int ICACHE_FLASH_ATTR httpdFindArg(char *line, char *arg, char *buff, int buffLe
 
 //Get the value of a certain header in the HTTP client head
 //Returns true when found, false when not found.
-int ICACHE_FLASH_ATTR httpdGetHeader(HttpdConnData *conn, char *header, char *ret, int retLen) {
+int ICACHE_FLASH_ATTR httpdGetHeader(HttpdConnData *conn, const char *header, char *ret, int retLen) {
 	char *p=conn->priv->head;
 	p=p+strlen(p)+1; //skip GET/POST part
 	p=p+strlen(p)+1; //skip HTTP part
@@ -330,7 +330,7 @@ void ICACHE_FLASH_ATTR httpdEndHeaders(HttpdConnData *conn) {
 }
 
 //Redirect to the given URL.
-void ICACHE_FLASH_ATTR httpdRedirect(HttpdConnData *conn, char *newUrl) {
+void ICACHE_FLASH_ATTR httpdRedirect(HttpdConnData *conn, const char *newUrl) {
 	http_dbg("Redirecting to %s", newUrl);
 	httpdStartResponse(conn, 302);
 	httpdHeader(conn, "Location", newUrl);
@@ -596,7 +596,7 @@ void ICACHE_FLASH_ATTR httpdCgiIsDone(HttpdConnData *conn) {
 
 //Callback called when the data on a socket has been successfully
 //sent.
-void ICACHE_FLASH_ATTR httpdSentCb(ConnTypePtr rconn, char *remIp, int remPort) {
+void ICACHE_FLASH_ATTR httpdSentCb(ConnTypePtr rconn, const char *remIp, int remPort) {
 	HttpdConnData *conn=httpdFindConnData(rconn, remIp, remPort);
 	httpdContinue(conn);
 }
@@ -860,7 +860,7 @@ void ICACHE_FLASH_ATTR httpdConnSendFinish(HttpdConnData *conn) {
 }
 
 //Callback called when there's data available on a socket.
-void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, char *remIp, int remPort, char *data, unsigned short len) {
+void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, const char *remIp, int remPort, char *data, unsigned short len) {
 	int x, r;
 	char *p, *e;
 	httpdPlatLock();
@@ -901,7 +901,7 @@ void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, char *remIp, int remPort, 
 			if (conn->priv->headPos!=HTTPD_MAX_HEAD_LEN) conn->priv->head[conn->priv->headPos++]=data[x];
 			conn->priv->head[conn->priv->headPos]=0;
 			//Scan for /r/n/r/n. Receiving this indicate the headers end.
-			if (data[x]=='\n' && (char *)strstr(conn->priv->head, "\r\n\r\n")!=NULL) {
+			if (data[x]=='\n' && strstr(conn->priv->head, "\r\n\r\n")!=NULL) {
 				//Indicate we're done with the headers.
 				conn->post->len=0;
 				//Reset url data
@@ -909,7 +909,7 @@ void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, char *remIp, int remPort, 
 				//Iterate over all received headers and parse them.
 				p=conn->priv->head;
 				while(p<(&conn->priv->head[conn->priv->headPos-4])) {
-					e=(char *)strstr(p, "\r\n"); //Find end of header line
+					e=strstr(p, "\r\n"); //Find end of header line
 					if (e==NULL) break;			//Shouldn't happen.
 					e[0]=0;						//Zero-terminate header
 					httpdParseHeader(p, conn);	//and parse it.
@@ -963,7 +963,7 @@ void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, char *remIp, int remPort, 
 
 //The platform layer should ALWAYS call this function, regardless if the connection is closed by the server
 //or by the client.
-void ICACHE_FLASH_ATTR httpdDisconCb(ConnTypePtr rconn, char *remIp, int remPort) {
+void ICACHE_FLASH_ATTR httpdDisconCb(ConnTypePtr rconn, const char *remIp, int remPort) {
 	httpdPlatLock();
 	HttpdConnData *hconn=httpdFindConnData(rconn, remIp, remPort);
 	if (hconn==NULL) {
@@ -978,7 +978,7 @@ void ICACHE_FLASH_ATTR httpdDisconCb(ConnTypePtr rconn, char *remIp, int remPort
 }
 
 
-int ICACHE_FLASH_ATTR httpdConnectCb(ConnTypePtr conn, char *remIp, int remPort) {
+int ICACHE_FLASH_ATTR httpdConnectCb(ConnTypePtr conn, const char *remIp, int remPort) {
 	int i;
 	httpdPlatLock();
 	//Find empty conndata in pool
