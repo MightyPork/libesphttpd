@@ -45,7 +45,7 @@ SDK_PATH	?= /opt/Espressif/ESP8266_RTOS_SDK
 LIB		= libesphttpd.a
 
 # which modules (subdirectories) of the project to include in compiling
-MODULES		= espfs core util
+MODULES		= espfs core util esphttpclient
 EXTRA_INCDIR	= ./include \
 					. \
 					lib/heatshrink/

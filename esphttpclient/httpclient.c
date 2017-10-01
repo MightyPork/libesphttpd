@@ -210,10 +210,13 @@ disconnect_callback(void *arg)
 	struct espconn *conn = (struct espconn *) arg;
 
 	if (conn == NULL) {
+		httpc_dbg("conn is null!");
 		return;
 	}
 
 	if (conn->reserve != NULL) {
+		httpc_dbg("Processing response");
+
 		request_args *req = (request_args *) conn->reserve;
 		int http_status = HTTP_STATUS_GENERIC_ERROR;
 		int body_size = 0;
@@ -254,7 +257,10 @@ disconnect_callback(void *arg)
 		}
 
 		free_req(req);
+	} else {
+		httpc_error("Reserve is NULL!");
 	}
+
 	espconn_delete(conn);
 	if (conn->proto.tcp != NULL) {
 		free(conn->proto.tcp);
