@@ -14,6 +14,8 @@
 #include <httpd.h>
 
 #define HTTP_STATUS_GENERIC_ERROR  -1   // In case of TCP or DNS error the callback is called with this status.
+#define HTTP_STATUS_TIMEOUT -2
+
 #define BUFFER_SIZE_MAX            5000 // Size of http responses that will cause an error.
 
 #define HTTP_REQUEST_TIMEOUT_MS 5000
@@ -31,15 +33,17 @@
 typedef void (* httpclient_cb)(int http_status,
 							   const char *response_headers,
 							   const char *response_body,
-							   size_t body_size);
+							   size_t body_size,
+							   void *userArg);
 
 typedef struct {
-	const char* url;
-	const char* headers;
-	const char* body;
-	httpd_method method;
-	int timeout;
-	size_t max_response_len;
+	const char* url;         //!< The full URL
+	const char* headers;     //!< Headers string (\r\n separated lines)
+	const char* body;        //!< Request body string
+	httpd_method method;     //!< HTTP method constant
+	int timeout;             //!< Timeout in ms
+	size_t max_response_len; //!< Max response length to allow
+	void *userArg;           //!< Opaque pointer that is passed to the user callback
 } httpclient_args;
 
 /**
@@ -52,9 +56,9 @@ void httpclient_args_init(httpclient_args *args);
  * @brief Download a web page from its URL.
  *
  * Try:
- * http_get("http://wtfismyip.com/text", http_callback_example);
+ * http_get("http://wtfismyip.com/text", NULL, http_callback_example);
  */
-bool http_get(const char * url, httpclient_cb user_callback);
+bool http_get(const char * url, void *userArg, httpclient_cb user_callback);
 
 /**
  * @brief Post data to a web form.
@@ -62,12 +66,12 @@ bool http_get(const char * url, httpclient_cb user_callback);
  * The data should be encoded as application/x-www-form-urlencoded.
  *
  * Try:
- * http_post("http://httpbin.org/post", "first_word=hello&second_word=world", http_callback_example);
+ * http_post("http://httpbin.org/post", "first_word=hello&second_word=world", NULL, http_callback_example);
  */
-bool http_post(const char *url, const char *post_data, httpclient_cb user_callback);
+bool http_post(const char *url, const char *post_data, void *userArg, httpclient_cb user_callback);
 
 /** Like POST, but with the PUT method. */
-bool http_put(const char *url, const char *body, httpclient_cb user_callback);
+bool http_put(const char *url, const char *body, void *userArg, httpclient_cb user_callback);
 
 /**
  * @brief Send a HTTP request
@@ -83,11 +87,11 @@ bool http_request(const httpclient_args *args, httpclient_cb user_callback);
 /**
  * Output on the UART.
  */
-void http_callback_example(int http_status, const char *response_headers, const char *response_body, size_t body_size);
+void http_callback_example(int http_status, const char *response_headers, const char *response_body, size_t body_size, void *userArg);
 
 /**
  * Show status code, and body on error. Error/warn log msg on error.
  */
-void http_callback_showstatus(int code, const char *response_headers, const char *response_body, size_t body_size);
+void http_callback_showstatus(int code, const char *response_headers, const char *response_body, size_t body_size, void *userArg);
 
 #endif
