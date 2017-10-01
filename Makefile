@@ -56,10 +56,6 @@ CFLAGS		= -Os -ggdb -std=c99 -Werror -Wpointer-arith -Wundef -Wall -Wl,-EL -fno-
 		-Wno-address -DHTTPD_MAX_CONNECTIONS=$(HTTPD_MAX_CONNECTIONS) -DHTTPD_STACKSIZE=$(HTTPD_STACKSIZE) \
 		-DGIT_HASH='"$(shell git rev-parse --short HEAD)"'
 
-ifdef SERVERNAME_PREFIX
-CFLAGS += -DSERVERNAME_PREFIX='"$(SERVERNAME_PREFIX)"'
-endif
-
 ifdef GLOBAL_CFLAGS
 CFLAGS += $(GLOBAL_CFLAGS)
 endif

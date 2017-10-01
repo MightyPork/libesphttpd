@@ -4,8 +4,9 @@
 // we must not use this macro outside the library, as the git hash is not defined there
 #define HTTPDVER "0.4+MightyPork/libesphttpd#" GIT_HASH
 
-#ifndef SERVERNAME_PREFIX
-#define SERVERNAME_PREFIX "esp8266-httpd "
+// default servername
+#ifndef HTTPD_SERVERNAME
+#define HTTPD_SERVERNAME "esp8266-httpd " HTTPDVER
 #endif
 
 //Max length of request head. This is statically allocated for each connection.
@@ -180,6 +181,6 @@ void httpdSentCb(ConnTypePtr conn, const char *remIp, int remPort);
 void httpdRecvCb(ConnTypePtr conn, const char *remIp, int remPort, char *data, unsigned short len);
 void httpdDisconCb(ConnTypePtr conn, const char *remIp, int remPort);
 int httpdConnectCb(ConnTypePtr conn, const char *remIp, int remPort);
-
+void httpdSetName(const char *name);
 
 #endif

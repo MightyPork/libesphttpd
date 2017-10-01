@@ -18,6 +18,7 @@ Esp8266 http server - core routines
 
 //This gets set at init time.
 static const HttpdBuiltInUrl *builtInUrls;
+static const char *serverName = HTTPD_SERVERNAME;
 
 typedef struct HttpSendBacklogItem HttpSendBacklogItem;
 
@@ -303,10 +304,11 @@ void ICACHE_FLASH_ATTR httpdStartResponse(HttpdConnData *conn, int code) {
 	const char *connStr="Connection: close\r\n";
 	if (conn->priv->flags&HFL_CHUNKED) connStr="Transfer-Encoding: chunked\r\n";
 	if (conn->priv->flags&HFL_NOCONNECTIONSTR) connStr="";
-	l=sprintf(buff, "HTTP/1.%d %d %s\r\nServer: "SERVERNAME_PREFIX HTTPDVER"\r\n%s",
+	l=sprintf(buff, "HTTP/1.%d %d %s\r\nServer: %s\r\n%s",
 			(conn->priv->flags&HFL_HTTP11)?1:0, 
 			code,
 			code2str(code),
+			serverName,
 			connStr);
 	httpdSend(conn, buff, l);
 
@@ -1037,4 +1039,12 @@ void ICACHE_FLASH_ATTR httpdInit(const HttpdBuiltInUrl *fixedUrls, int port) {
 	uptime_timer_init();
 
 	http_info("Httpd init");
+}
+
+/**
+ * Set server name (must be constant / strdup)
+ * @param name
+ */
+void ICACHE_FLASH_ATTR httpdSetName(const char *name) {
+	serverName = name;
 }

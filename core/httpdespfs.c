@@ -21,7 +21,6 @@ Connector to let httpd use the espfs filesystem to serve the files in it.
 // The static files marked with FLAG_GZIP are compressed and will be served with GZIP compression.
 // If the client does not advertise that he accepts GZIP send following warning message (telnet users for e.g.)
 static const char *gzipNonSupportedMessage = "HTTP/1.0 501 Not implemented\r\n"
-											 "Server: "SERVERNAME_PREFIX HTTPDVER"\r\n"
 											 "Connection: close\r\n"
 											 "Content-Type: text/plain\r\n"
 											 "Content-Length: 52\r\n"
