@@ -18,9 +18,7 @@
  */
 #define banner(fmt, ...) \
 	do {  \
-		printf(LOG_EOL "\x1b[32;1m");  \
-		uptime_print();  \
-		printf(" [i] " fmt "\x1b[0m" LOG_EOL LOG_EOL, ##__VA_ARGS__);  \
+		printf(LOG_EOL "\x1b[32;1m[i] " fmt "\x1b[0m" LOG_EOL, ##__VA_ARGS__);  \
 	} while(0)
 
 /**
@@ -29,9 +27,15 @@
  */
 #define banner_info(fmt, ...) \
 	do { \
-		printf("\x1b[32m"); \
-		uptime_print(); \
-		printf(" [i] " fmt "\x1b[0m"LOG_EOL, ##__VA_ARGS__); \
+		printf("\x1b[32m[i] " fmt "\x1b[0m"LOG_EOL, ##__VA_ARGS__); \
+	} while(0)
+
+/**
+ * Empty line in the headers
+ */
+#define banner_gap() \
+	do { \
+		printf(LOG_EOL); \
 	} while(0)
 
 #if VERBOSE_LOGGING
