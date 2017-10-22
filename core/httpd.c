@@ -949,6 +949,7 @@ void ICACHE_FLASH_ATTR httpdRecvCb(ConnTypePtr rconn, const char *remIp, int rem
 					httpdProcessRequest(conn);
 				}
 				conn->post->buffLen = 0;
+				conn->post->len = 0; // this causes transfer to the recvHdl branch
 			}
 		} else {
 			//Let cgi handle data if it registered a recvHdl callback. If not, ignore.
